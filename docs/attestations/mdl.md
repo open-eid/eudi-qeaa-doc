@@ -3,7 +3,7 @@
 This section describes the structure, type, data element identifiers and logical organisation of the mandatory
 attributes of the CBOR encoded Mobile Driving License (mDL) attestation.
 
-mDL data model is described in section 7 of [ISO/IEC 18013-5:2021], the standard for the mobile driving license
+mDL data model is described in section 7 of [ISO/IEC 18013-5:2021], the standard for the mobile driving licence
 use case.
 
 <a id="mdl-document-type-and-namespace"></a>
@@ -533,7 +533,7 @@ A non-normative example of the mDL document in CBOR diagnostic notation:
 
 When mDL is presented during [OpenID4VP] presentation flow, the Wallet `MUST` bind authorization request `client_id`
 and `nonce` values to the presented mDL. This is accomplished by adding `deviceSigned` element to mDL document
-that `SHALL` contain the required `client_id` and `nonce` as device signed elements. Current [ISO/IEC 18013-5:2021]
+that `SHALL` contain the required `client_id` and `nonce` as device signed elements. The [ISO/IEC 18013-5:2021]
 specification has not considered the requirements of [OpenID4VP] and
 therefore current specification extends [SessionTranscript](#mdl-session-transcript-structure) structure with
 new `Handover` type [OpenID4VPHandover](#mdl-openid4vp-handover-structure) to support `client_id` and `nonce` as

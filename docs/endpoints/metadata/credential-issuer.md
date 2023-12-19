@@ -101,7 +101,7 @@ credential type and minimal set of mandatory claims as defined in [ISO/IEC 18013
           "locale": "en-US",
           "logo": {
             "url": "https://examplestate.com/public/mdl.png",
-            "alt_text": "a square figure of a mobile driving license"
+            "alt_text": "a square figure of a mobile driving licence"
           },
           "background_color": "#12107c",
           "text_color": "#FFFFFF"

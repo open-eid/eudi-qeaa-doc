@@ -1,10 +1,10 @@
 1. The Token Endpoint is an HTTP API at the Authorization Server and is used by the Wallet Instance to obtain an Access
    Token by presenting its authorization grant, as defined in [RFC 6749]
 2. It `MUST` accept HTTP `POST` request with parameters in the HTTP request message body using
-   the `application/x-www-form-urlencoded` format.
+   the `application/x-www-form-urlencoded` format [OpenID4VCI].
 3. It `MUST` use the `https` scheme.
-4. It `MUST` issue sender-constrained Access Tokens.
-5. It `MUST` use `attest_jwt_client_auth` Client Authentication method as defined in [RFC 7523],[RFC 7521].
+4. It `MUST` issue sender-constrained Access Tokens [RFC 9449].
+5. It `MUST` use `attest_jwt_client_auth` Client Authentication method as defined in [RFC 7523], [RFC 7521].
 
 ### Token Request
 
@@ -13,9 +13,9 @@
 |`client_id`|It `MUST` be set to `sub` claim value of the [WIA](#wia-jwt).|[RFC 6749]|
 |`grant_type`|It `MUST` be set to `authorization_code`.|[RFC 6749], [RFC 7521]|
 |`code`|It `MUST` be set to Authorization code returned in the Authentication Response.|[RFC 6749], [RFC 7521]|
-|`code_verifier`|Verification code of the `code_challenge` sent in PAR Request.|[RFC 9449]|
+|`code_verifier`|Verification code of the `code_challenge` sent in PAR Request.|[RFC 7636]|
 |`client_assertion_type`|It `MUST` be set to `urn:ietf:params:oauth:client-assertion-type:jwt-client-attestation`.|[OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth]|
-|`client_assertion`|It `MUST` contain two JWTs separated by a `~` character. It `MUST NOT` contain more or less than precisely two JWTs seperated by the `~` character. The first JWT MUST be the [WIA](#wia-jwt) as `Client Attestation JWT` the second JWT `MUST` be the `Client Attestation PoP JWT` ([WIA-PoP](#vci-token-client-attestation-pop-jwt)) that `MUST` be signed by the private key defined in [WIA](#wia-jwt) `cnf` claim.|[OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth], Sections 4.1.1, 4.1.2|
+|`client_assertion`|It `MUST` contain two JWTs separated by a `~` character. It `MUST NOT` contain more or less than precisely two JWTs separated by the `~` character. The first JWT MUST be the [WIA](#wia-jwt) as `Client Attestation JWT` the second JWT `MUST` be the `Client Attestation PoP JWT` ([WIA-PoP](#vci-token-client-attestation-pop-jwt)) that `MUST` be signed by the private key defined in [WIA](#wia-jwt) `cnf` claim.|[OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth], Sections 4.1.1, 4.1.2|
 |`redirect_uri`|It `MUST` be set as in the PAR Request Object.|[RFC 6749], [RFC 7521]|
 
 <a id="vci-token-client-attestation-pop-jwt"></a>

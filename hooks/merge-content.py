@@ -30,7 +30,10 @@ def iterate_nav_items(config, nav, depth=1, content = ''):
             file_path = os.path.join(config['docs_dir'], nav_obj.url.strip('/') + '.md')
             if file_path.endswith('/.md'):
                 file_path = file_path.replace('/.md', '/index.md')
-            if os.path.exists(file_path):
+                if os.path.exists(file_path):
+                    with open(file_path, 'r') as infile:
+                        content += infile.read() + '\n'
+            elif os.path.exists(file_path):
                 with open(file_path, 'r') as infile:
                     content += f"{'#' * depth}" + ' ' +  nav_obj.title + '\n\n'
                     content += infile.read() + '\n'

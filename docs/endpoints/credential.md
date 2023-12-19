@@ -52,7 +52,6 @@ The `jwt Key Proof` type `MUST` contain following header/payload claims:
 
 |Claim|Description|Reference|
 |:----|:----|:----|
-|Claim|Description|Reference|
 |`alg`|A digital signature algorithm identifier such as per IANA "JSON Web Signature and Encryption Algorithms" registry. It `MUST NOT` be set to `none` or with a symmetric algorithm (MAC) identifier.|[OPENID4VCI], [RFC 7515], [RFC 7517]|
 |`typ`|It `MUST` be set to `openid4vci-proof+jwt`|[OPENID4VCI], [RFC 7515], [RFC 7517]|
 |`jwk`|It `MUST` contain the key material the new Credential shall be bound to.|[OPENID4VCI], [RFC 7515], [RFC 7517]|

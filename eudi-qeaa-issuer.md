@@ -1,3 +1,9 @@
+<img src="docs/potential_logo.png" alt="Potential. For European Digital Identity. Co-funded by the European Union."  style="width: 400px;"/>
+
+Funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not
+necessarily reflect those of the European Union or Potential Consortium. Neither the European Union nor the granting
+authority can be held responsible for them.
+
 # Summary
 
 This document implements Mobile Driving Licence use case and Qualified Electronic Attestations of Attributes Provider
@@ -6,6 +12,7 @@ and the set of technical standards planned to ensure interoperability among diff
 
 The aim is to ensure that the Estonian (Q)EAA issuer implementation is interoperable within the EUDI ecosystem across
 all member states, while meeting the necessary security, privacy, and user experience standards.
+
 # Versions
 
 |Version|Date|Changes|
@@ -101,7 +108,7 @@ C4Context
 This section describes the structure, type, data element identifiers and logical organisation of the mandatory
 attributes of the CBOR encoded Mobile Driving License (mDL) attestation.
 
-mDL data model is described in section 7 of [ISO/IEC 18013-5:2021], the standard for the mobile driving license
+mDL data model is described in section 7 of [ISO/IEC 18013-5:2021], the standard for the mobile driving licence
 use case.
 
 <a id="mdl-document-type-and-namespace"></a>
@@ -631,7 +638,7 @@ A non-normative example of the mDL document in CBOR diagnostic notation:
 
 When mDL is presented during [OpenID4VP] presentation flow, the Wallet `MUST` bind authorization request `client_id`
 and `nonce` values to the presented mDL. This is accomplished by adding `deviceSigned` element to mDL document
-that `SHALL` contain the required `client_id` and `nonce` as device signed elements. Current [ISO/IEC 18013-5:2021]
+that `SHALL` contain the required `client_id` and `nonce` as device signed elements. The [ISO/IEC 18013-5:2021]
 specification has not considered the requirements of [OpenID4VP] and
 therefore current specification extends [SessionTranscript](#mdl-session-transcript-structure) structure with
 new `Handover` type [OpenID4VPHandover](#mdl-openid4vp-handover-structure) to support `client_id` and `nonce` as
@@ -1595,7 +1602,7 @@ A non-normative example of the Presentation Submission Object:
 |:----|:----|:----|
 |`request`|It `MUST` be a signed JWT. It `MUST` be signed by the private key defined in [WIA](#wia-jwt) `cnf` claim. All request parameters `MUST` appear as claims of the JWT representing the authorization request except `client_assertion` and `client_assertion_type`.|[RFC 9126] Section 3|
 |`client_assertion_type`|It `MUST` be set to `urn:ietf:params:oauth:client-assertion-type:jwt-client-attestation`.|[OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth]|
-|`client_assertion`|It `MUST` contain two JWTs separated by a `~` character. It `MUST NOT` contain more or less than precisely two JWTs seperated by the `~` character. The first JWT MUST be the [WIA](#wia-jwt) as `Client Attestation JWT` the second JWT `MUST` be the `Client Attestation PoP JWT` ([WIA-PoP](#vci-par-client-attestation-pop-jwt)) that `MUST` be signed by the private key defined in [WIA](#wia-jwt) `cnf` claim.|[OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth], Sections 4.1.1, 4.1.2|
+|`client_assertion`|It `MUST` contain two JWTs separated by a `~` character. It `MUST NOT` contain more or less than precisely two JWTs separated by the `~` character. The first JWT MUST be the [WIA](#wia-jwt) as `Client Attestation JWT` the second JWT `MUST` be the `Client Attestation PoP JWT` ([WIA-PoP](#vci-par-client-attestation-pop-jwt)) that `MUST` be signed by the private key defined in [WIA](#wia-jwt) `cnf` claim.|[OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth], Sections 4.1.1, 4.1.2|
 
 <a id="vci-par-client-attestation-pop-jwt"></a>
 **Client Attestation PoP JWT (WIA-PoP)*
@@ -1742,10 +1749,10 @@ A non-normative example of the Presentation Submission Object:
 1. The Token Endpoint is an HTTP API at the Authorization Server and is used by the Wallet Instance to obtain an Access
    Token by presenting its authorization grant, as defined in [RFC 6749]
 2. It `MUST` accept HTTP `POST` request with parameters in the HTTP request message body using
-   the `application/x-www-form-urlencoded` format.
+   the `application/x-www-form-urlencoded` format [OpenID4VCI].
 3. It `MUST` use the `https` scheme.
-4. It `MUST` issue sender-constrained Access Tokens.
-5. It `MUST` use `attest_jwt_client_auth` Client Authentication method as defined in [RFC 7523],[RFC 7521].
+4. It `MUST` issue sender-constrained Access Tokens [RFC 9449].
+5. It `MUST` use `attest_jwt_client_auth` Client Authentication method as defined in [RFC 7523], [RFC 7521].
 
 ### Token Request
 
@@ -1754,9 +1761,9 @@ A non-normative example of the Presentation Submission Object:
 |`client_id`|It `MUST` be set to `sub` claim value of the [WIA](#wia-jwt).|[RFC 6749]|
 |`grant_type`|It `MUST` be set to `authorization_code`.|[RFC 6749], [RFC 7521]|
 |`code`|It `MUST` be set to Authorization code returned in the Authentication Response.|[RFC 6749], [RFC 7521]|
-|`code_verifier`|Verification code of the `code_challenge` sent in PAR Request.|[RFC 9449]|
+|`code_verifier`|Verification code of the `code_challenge` sent in PAR Request.|[RFC 7636]|
 |`client_assertion_type`|It `MUST` be set to `urn:ietf:params:oauth:client-assertion-type:jwt-client-attestation`.|[OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth]|
-|`client_assertion`|It `MUST` contain two JWTs separated by a `~` character. It `MUST NOT` contain more or less than precisely two JWTs seperated by the `~` character. The first JWT MUST be the [WIA](#wia-jwt) as `Client Attestation JWT` the second JWT `MUST` be the `Client Attestation PoP JWT` ([WIA-PoP](#vci-token-client-attestation-pop-jwt)) that `MUST` be signed by the private key defined in [WIA](#wia-jwt) `cnf` claim.|[OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth], Sections 4.1.1, 4.1.2|
+|`client_assertion`|It `MUST` contain two JWTs separated by a `~` character. It `MUST NOT` contain more or less than precisely two JWTs separated by the `~` character. The first JWT MUST be the [WIA](#wia-jwt) as `Client Attestation JWT` the second JWT `MUST` be the `Client Attestation PoP JWT` ([WIA-PoP](#vci-token-client-attestation-pop-jwt)) that `MUST` be signed by the private key defined in [WIA](#wia-jwt) `cnf` claim.|[OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth], Sections 4.1.1, 4.1.2|
 |`redirect_uri`|It `MUST` be set as in the PAR Request Object.|[RFC 6749], [RFC 7521]|
 
 <a id="vci-token-client-attestation-pop-jwt"></a>
@@ -1905,7 +1912,6 @@ The `jwt Key Proof` type `MUST` contain following header/payload claims:
 
 |Claim|Description|Reference|
 |:----|:----|:----|
-|Claim|Description|Reference|
 |`alg`|A digital signature algorithm identifier such as per IANA "JSON Web Signature and Encryption Algorithms" registry. It `MUST NOT` be set to `none` or with a symmetric algorithm (MAC) identifier.|[OPENID4VCI], [RFC 7515], [RFC 7517]|
 |`typ`|It `MUST` be set to `openid4vci-proof+jwt`|[OPENID4VCI], [RFC 7515], [RFC 7517]|
 |`jwk`|It `MUST` contain the key material the new Credential shall be bound to.|[OPENID4VCI], [RFC 7515], [RFC 7517]|
@@ -2127,7 +2133,7 @@ credential type and minimal set of mandatory claims as defined in [ISO/IEC 18013
           "locale": "en-US",
           "logo": {
             "url": "https://examplestate.com/public/mdl.png",
-            "alt_text": "a square figure of a mobile driving license"
+            "alt_text": "a square figure of a mobile driving licence"
           },
           "background_color": "#12107c",
           "text_color": "#FFFFFF"

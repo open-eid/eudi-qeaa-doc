@@ -3,7 +3,7 @@
 [EUDI Architecture and Reference Framework][EUDI-ARF] Sections 5 and 6 specify the requirements for PID and (Q)EAA
 Providers and EUDI Wallet Solution implementers.
 
-### Implementation Scope
+### EUDI-ARF Implementation Scope
 
 1. Only QEAA Provider related requirements `SHALL` be considered.
 2. Only Mobile Driving Licence (mDL) use case `SHALL` be considered.
@@ -24,5 +24,7 @@ Providers and EUDI Wallet Solution implementers.
 12. The Authorization Server and Credential Issuer `SHALL` be considered as separate entities in [OPENID4VCI] protocol
     implementation.
 13. The authorization response in [OPENID4VP] flow `SHALL NOT` be encrypted.
+14. The issued Mobile Driving Licence `SHALL` have 7 day expiry time.
+15. The Mobile Driving Licence issuer `SHALL NOT` provide revocation list.
 
 [^1]: Implementation details are still under discussion within the EUDI Wallet ecosystem.

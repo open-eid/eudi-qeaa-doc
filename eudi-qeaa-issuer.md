@@ -19,6 +19,7 @@ all member states, while meeting the necessary security, privacy, and user exper
 |:----|:----|:----|
 |1.0.0|30.11.2023|EUDI (Q)EAA Provider Technical Documentation|
 |1.0.1|07.12.2023|Token request redirect_uri parameter description fix. Removed expires_in from token response. Removed the max value requirement for c_nonce_expires_in parameter.|
+|1.0.2|20.12.2023|Requirements section updates. Potential logo and disclamer.|
 # Keywords
 
 This document uses the capitalized
@@ -33,7 +34,7 @@ document.
 [EUDI Architecture and Reference Framework][EUDI-ARF] Sections 5 and 6 specify the requirements for PID and (Q)EAA
 Providers and EUDI Wallet Solution implementers.
 
-### Implementation Scope
+### EUDI-ARF Implementation Scope
 
 1. Only QEAA Provider related requirements `SHALL` be considered.
 2. Only Mobile Driving Licence (mDL) use case `SHALL` be considered.
@@ -54,6 +55,8 @@ Providers and EUDI Wallet Solution implementers.
 12. The Authorization Server and Credential Issuer `SHALL` be considered as separate entities in [OPENID4VCI] protocol
     implementation.
 13. The authorization response in [OPENID4VP] flow `SHALL NOT` be encrypted.
+14. The issued Mobile Driving Licence `SHALL` have 7 day expiry time.
+15. The Mobile Driving Licence issuer `SHALL NOT` provide revocation list.
 
 [^1]: Implementation details are still under discussion within the EUDI Wallet ecosystem.
 

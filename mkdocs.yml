@@ -19,9 +19,10 @@ nav:
       - 5.2. Authorization Endpoint: endpoints/authorization.md
       - 5.3. Token Endpoint: endpoints/token.md
       - 5.4. Credential Endpoint: endpoints/credential.md
-      - 5.5. Metadata Endpoints:
-          - 5.5.1. Authorization Server: endpoints/metadata/as.md
-          - 5.5.2. Credential Issuer: endpoints/metadata/credential-issuer.md
+      - 5.5. Credential Nonce Endpoint: endpoints/credential-nonce.md
+      - 5.6. Metadata Endpoints:
+          - 5.6.1. Authorization Server: endpoints/metadata/as.md
+          - 5.6.2. Credential Issuer: endpoints/metadata/credential-issuer.md
   - 6. Security Considerations: security-considerations.md
 
 markdown_extensions:

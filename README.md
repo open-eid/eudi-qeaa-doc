@@ -36,5 +36,5 @@ and [Markdown](https://daringfireball.net/projects/markdown/).
 
 1. Edit markdown files inside the `docs` directory
 2. Preview Your changes by issuing `mkdocs serve` in project root and navigating to <http://localhost:8000>
-3. Build assembled documentation `eudi-qeaa-issuer.md` by issuing `mkdocs build` in project root 
+3. Build assembled documentation `eudi-qeaa-issuer.md` by issuing `mkdocs build` in project root
 4. Commit and push Your changes to `git`

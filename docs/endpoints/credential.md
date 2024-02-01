@@ -25,7 +25,6 @@
 |:----|:----|:----|
 |`format`|Format of the Credential to be issued. It `MUST` be set to `mso_mdoc` as published in Credential Issuer Metadata.|[OPENID4VCI]|
 |`doctype`|JSON string identifying the credential type as defined in [ISO/IEC 18013-5:2021]. It `MUST` be set to `org.iso.18013.5.1.mDL`. |[OPENID4VCI], Section E.2.5|
-|`claims`|A JSON object containing a list of name/value pairs, where the name is a certain namespace as defined in ISO/IEC 18013-5:2021 (or any profile of it) and the value is a JSON object. It `MUST` defined as in [Credential Request Claims Object](#vci-credential-request-claims-object).|[OPENID4VCI], Section E.2.2, E.2.5|
 |`proof`|JSON object containing proof of possession of the key material the issued credential shall be bound to. The proof object `MUST` contain the mandatory claims as defined in [Credential Request Proof Object](#vci-credential-request-proof-object) table. |[OPENID4VCI]|
 
 <a id="vci-credentials-request-claims-object"></a>
@@ -83,7 +82,7 @@ In addition to the values that are defined in the Token Endpoint, the proof `MUS
 2. If request to this endpoint is made without `DPoP proof JWT` or the `Access Token` is not sender-constrained the
    server `MUST` return `401 HTTP` response status with `WWW-Authenticate` header as defined in [RFC 9449], Section 7.1
 3. It must `MUST` validate the sender-constrained access token from `Authorization` header.
-4. It must `MUST` validate the [Credential Request](#vci-credential-request) parameters.
+4. It must `MUST` validate the [Credential Request](#vci-credential-request) parameters and return errors as described in [OPENID4VCI], Section 7.3.1.
 5. It must `MUST` validate the `jwt Key Proof` as described in [OPENID4VCI], Section 7.2.2.
 
 <a id="vci-credential-response"></a>
@@ -94,7 +93,7 @@ In addition to the values that are defined in the Token Endpoint, the proof `MUS
 3. On failed Credential Response it `MUST` use error codes as described in [OPENID4VCI], Section 7.3.1.
 4. Credential Response `MUST` be sent using `application/json` content type and contain following claims:
 
-|Claim|Description|Reference|
+|Parameter|Description|Reference|
 |:----|:----|:----|
 |`format`|It `MUST` be set to `mso_mdoc`|[OPENID4VCI]|
 |`credential`|Contains the issued QEAA. It `MUST` be base64url-encoded JSON string in [ISO/IEC 18013-5:2021] format. It `MUST` contain CBOR encoded mDL as described in [MDOC-CBOR Format](#mdoc-cbor-format) section.|[OPENID4VCI], Appendix E|
@@ -108,5 +107,5 @@ In addition to the values that are defined in the Token Endpoint, the proof `MUS
    according to [Credential Response](#vci-credential-response)
 2. It `MUST` validate that the QEAA Provider is not revoked before the issued credential issuing time.
 3. It `MUST` validate that the Issued Credential is signed by corresponding QEAA Provider.
-4. It `MUST` store `c_nonce`, `c_nonce_expires_in` claims to perform credential update without authorization code flow.
+4. It `MUST` store `c_nonce`, `c_nonce_expires_in` claims to perform credential update in the future.
 5. It `MUST` perform credential update before `c_nonce_expires_in`.

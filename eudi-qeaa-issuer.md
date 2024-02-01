@@ -19,7 +19,8 @@ all member states, while meeting the necessary security, privacy, and user exper
 |:----|:----|:----|
 |1.0.0|30.11.2023|EUDI (Q)EAA Provider Technical Documentation|
 |1.0.1|07.12.2023|Token request redirect_uri parameter description fix. Removed expires_in from token response. Removed the max value requirement for c_nonce_expires_in parameter.|
-|1.0.2|20.12.2023|Requirements section updates. Potential logo and disclamer.|
+|1.0.2|20.12.2023|Requirements section updates. Potential logo and disclaimer.|
+|1.0.3|01.02.2024|Renamed doctype parameter to credential_configuration_id and removed claims parameter from PAR Authorization Details Object. Removed claims parameter from credential request. Updated the Presentation Flow to use sending Authorization Request Object by reference and sending Authorization Response using response mode `direct_post`. Added Credential Nonce endpoint specification and `credential_nonce_endpoint` metadata parameter. Renamed credential issuer metadata parameter `credentials_supported` to `credential_configurations_supported`.|
 # Keywords
 
 This document uses the capitalized
@@ -685,7 +686,7 @@ order:
 |`DeviceAuthentication`|It `MUST` be set to `DeviceAuthentication`.|`tstr`|
 |`SessionTranscript`||`array`|
 |`DocType`|It `MUST` be set to `org.iso.18013.5.1.mDL`|`tstr`|
-|`DeviceNameSpacesBytes`|It `MUST` be set to empty `map`  encoded in CBOR Tag 24 ([cbor-tags]).|`encoded-cbor`|
+|`DeviceNameSpacesBytes`|It `MUST` be set to empty `map` encoded in CBOR Tag 24 ([cbor-tags]).|`encoded-cbor`|
 
 <a id="mdl-session-transcript-structure"></a>
 **SessionTranscript**
@@ -958,7 +959,8 @@ Credential from the End-User to the Relying Party (RP), **without involvement of
    and [Proof Key for Code Exchange (PKCE)][RFC 7636] as recommended in [OpenID4VCI], Section 3.4.
 3. It uses sender-constrained access tokens by [Demonstrating Proof of Possession (DPoP)][RFC 9449].
 4. It uses `attest_jwt_client_auth` Client Authentication
-   method ([OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth]) in PAR and Token Endpoint.
+   method ([OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth]) in PAR and Token
+   Endpoint.
 
 <a id="vci-issuance-flow"></a>
 ### Issuance Flow
@@ -1036,9 +1038,11 @@ sequenceDiagram
 ---
 **Steps 3-7 (Discovery).**
 
-- Wallet Instance `SHALL` request QEAA Provider metadata and use `authorization_server` claim to request Authorization
-  Server metadata. The metadata contains technical information about the Issuer and translations/display data for the
-  offered credentials.
+- Wallet Instance `SHALL` request QEAA Provider metadata and use `authorization_servers` claim to request Authorization
+  Server metadata. When there are multiple entries in the array, the Wallet may be able to determine which AS to use by
+  querying the metadata; for example, by examining the grant_types_supported values, the Wallet can filter the server to
+  use based on the grant type it plans to use. The metadata contains technical information about the Issuer and
+  translations/display data for the offered credentials.
 - It `MUST` check if the QEAA Provider/Authorization Server are trusted and not revoked. The exact methods to attest
   trust and validity are still under discussion in [EUDI-ARF].
 
@@ -1077,7 +1081,8 @@ sequenceDiagram
 
 - The Authorization Server performs `REQUIRED` validation checks as described in PAR Validation Steps section. In
   summary:
-    - It `MUST` authenticate the Wallet Instance using [OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth].
+    - It `MUST` authenticate the Wallet Instance
+      using [OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth].
     - It `MUST` request Wallet Provider/Wallet Instance/QEAA Provider revocation states.
     - It `MUST` validate the `Request Object`.
 - The Authorization Server `MUST` create a new `session` related to `client_id`.
@@ -1131,15 +1136,16 @@ sequenceDiagram
 
 - The Authorization Server performs `REQUIRED` validation checks as described in Token Request Validation Steps. In
   summary:
-    - It `MUST` authenticate the Wallet Instance using [OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth].
+    - It `MUST` authenticate the Wallet Instance
+      using [OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth].
     - It `MUST` validate the DPoP proof for Token Endpoint.
     - It `MUST` validate the `Token Request`.
 
 ---
 **Step 29-32 (Token Response).**
 
-- Due to the Requirement 11 the `c_nonce` has to be requested from QEAA Issuer Nonce Endpoint or alternately not be
-  returned by Token Endpoint and instead acquired from Credential endpoint error response as described in [OpenID4VCI].
+- The `c_nonce` has to be requested from QEAA Issuer Nonce Endpoint or alternately acquired from Credential endpoint
+  error response as described in [OpenID4VCI].
 - If the validation is successful, it `MUST` issue an `Access Token` bound to the DPoP key and a `c_nonce`, that is
   used to create a proof of possession of key material when requesting a Credential Endpoint.
 
@@ -1239,6 +1245,11 @@ different Credential formats.
   "response_types_supported": [
     "vp_token"
   ],
+  "response_modes_supported": [
+    "direct_post"
+  ],
+  "request_uri_parameter_supported": true,
+  "request_parameter_supported": false,
   "vp_formats_supported": {
     "mso_mdoc": {
       "alg_values_supported": [
@@ -1252,90 +1263,128 @@ different Credential formats.
 <a id="vp-presentation-flow"></a>
 ### Presentation Flow
 
+The Presentation Flow uses the Response Mode `direct_post` that allows the Wallet to send the Authorization Response to
+an endpoint controlled by the Verifier via an HTTPS POST request. The [OpenID4VP] Section 11.5 leaves the exact
+implementation up to the Verifier. This document implements modified version of the flow specified in [OpenID4VP]
+Section 11.5 that adds Verifier Request Object Endpoint that initiates the transaction instead.
+
 ```mermaid
 sequenceDiagram
     autonumber
     box Gray User's smartphone
-        participant V as Verifier
+        participant V as Verifier App
+        participant VB as Verifier Backend
         participant B as Browser
         participant W as Wallet Instance
     end
     actor U as User
     activate V
-    U ->> V: Start required credential presentation flow
+    U ->> V: Start the process that requires presenting a credential
     V ->> V: Use static set of Wallet metadata
     V ->> V: Create nonce/state
     V ->> V: Create signed Authorization Request Object
-    V ->> B: GET /authorize <client_id, request>
+    V ->> VB: POST /request_object <authorization_request_object>
+    activate VB
+    VB ->> VB: Crete transaction <request_uri, expiry_time, transaction_id, response_code, state, authorization_request_object>
+    VB -->> V: HTTP 200 <request_uri, expiry_time, transaction_id, response_code>
+    deactivate VB
+    V ->> B: GET /authorize <client_id, request_uri>
     deactivate V
-    B ->> W: GET /authorize <client_id, request>
+    activate B
+    B ->> W: GET /authorize <client_id, request_uri>
     activate W
-    W ->> W: Validate the Request Object and its signature
+    deactivate B
+    W ->> VB: GET <request_uri>
+    activate VB
+    VB -->> W: HTTP 200 Authorization Request object
+    deactivate VB
+    W ->> W: Validate the Authorization Request Object and its signature
     W ->> W: Check Verifier trust/revocation status
     W ->> W: Process the Verifier metadata
     W ->> W: Process the Presentation Definition
     W ->> U: AuthN
+    activate U
     U -->> W: Biometrics/PIN/UsernamePassword
+    deactivate U
     W ->> U: AuthZ
+    activate U
     U -->> W: Consent
+    deactivate U
     W ->> W: Create vp_token/presentation_submission
-    W -->> B: HTTP 302 /auth_callback <vp_token, presentation_submission, state>
-    B -->> V: HTTP 302 /auth_callback <vp_token, presentation_submission, state>
-    activate V
+    W ->> VB: POST /response_object <vp_token, presentation_submission, state>
+    activate VB
+    VB ->> VB: Find transaction by state
+    VB ->> VB: Update transaction <vp_token, presentation_submission>
+    VB -->> W: HTTP 200 <redirect_uri with response_code>
+    deactivate VB
+    W ->> V: HTTP 302 <redirect_uri with response_code>
     deactivate W
-    V ->> V: Validate the Authorization Response
+    activate V
+    V ->> VB: GET /response_object <transaction_id, response_code>
+    activate VB
+    VB ->> VB: Find transaction <transaction_id, response_code>
+    VB -->> V: HTTP 200 <vp_token, presentation_submission, state>
+    deactivate VB
+    V ->> V: Find Request Object by state
+    V ->> V: Validate the Authorization Response Object (key binding, signature, nonce)
     V ->> V: Check Credential Issuer trust/revocation status
+    V ->> V: Continue the process that required the credential
     deactivate V
 ```
 
 ---
 **Step 1 (Presentation flow start).**
 
-- User (or the Verifier application) starts the required credential presentation flow.
+- User (or the Verifier application) starts the process that requires credential presentation.
 
 ---
-**Steps 2-6 (Authorization Request).**
+**Steps 2-4 (Authorization Request).**
 
 - The Verifier `MUST` use the static set of [Wallet metadata](#vp-wallet-metadata) to determine Credential formats,
   proof types and algorithms supported by the Wallet to be used in a protocol exchange.
 - It `MUST` create a fresh `nonce` with sufficient entropy to securely bind the Verifiable Presentation(s) provided by
-  the
-  Wallet to the particular transaction.
+  the Wallet to the particular transaction.
 - It `MUST` create a `state` to link Authorization Request to Authorization Response.
 - It `MUST` create a [JWT-Secured Authorization Request (JAR)][RFC 9101] with claims defined
   in [Authorization Request Object](#vp-authorization-request-object).
 
 ---
-**Steps 7-8 (Authorization Request validation).**
+**Steps 5-7 (POST Authorization Request).**
 
-- The Wallet performs the `REQUIRED` [Authorization Request validation steps](#vp-request-validation-steps).
-- It `MUST` check if the Verifier is trusted and not revoked. The exact methods to attest trust and validity are still
-  under discussion in [EUDI-ARF].
+- The Verifier `SHALL` post the [Authorization Request Object](#vp-authorization-request-object) to Verifier Backend
+  [POST Request Object Endpoint](#vp-post-request-object-endpoint).
+- Verifier Backend initiates transaction by generating:
+    - `transaction_id` and `response_code` and associates them
+      to [Authorization Request Object](#vp-authorization-request-object) `state` claim to link Request Object to
+      Response Object.
+- Verifier Backend returns `request_uri` where [Authorization Request Object](#vp-authorization-request-object) can be
+  requested by the Wallet.
 
 ---
-**Step 9 (Verifier Metadata validation).**
+**Steps 8-15 (Authorization request and validation).**
 
-- The Wallet performs the `REQUIRED` [Verifier Metadata validation steps](#vp-verifier-metadata-validation-steps).
-
----
-**Step 10 (Presentation Definition validation).**
-
-- The Wallet performs
+- Verifier request the authorization endpoint with `client_id`, `request_uri` parameters.
+- Wallet requests the [Authorization Request Object](#vp-authorization-request-object) from `request_uri`
+- Wallet performs the `REQUIRED` [Authorization Request validation steps](#vp-request-validation-steps).
+- Wallet `MUST` check if the Verifier is trusted and not revoked. The exact methods to attest trust and validity are
+  still under discussion in [EUDI-ARF].
+- Wallet performs the `REQUIRED` [Verifier Metadata validation steps](#vp-verifier-metadata-validation-steps).
+  The Wallet performs
   the `REQUIRED` [Presentation Definition validation steps](#vp-presentation-definition-validation-steps), that
   describes the requirements of the Credential(s) that the Verifier is requesting to be presented.
 
 ---
-**Steps 11-12 (User authentication).**
+**Steps 16-17 (User authentication).**
 
 - The Wallet `MUST` authenticate the User with Biometrics/PIN/UsernamePassword.
 
 ---
-**Steps 13-14 (User consent).**
+**Steps 18-19 (User consent).**
 
 - The Wallet `MUST` ask the User consent for requested credentials and claims.
 
 ---
-**Step 15 (vp_token/presentation_submission creation).**
+**Step 20 (vp_token/presentation_submission creation).**
 
 - The Wallet `MUST` bind Verifiable Presentation to the authorization request `client_id` and `nonce` values by
   appending [DeviceSigned](#mdl-device-signed-structure) structure
@@ -1345,20 +1394,28 @@ sequenceDiagram
   to [Presentation Definition](#vp-presentation-submission-object).
 
 ---
-**Steps 16-17 (Authorization Response).**
+**Steps 21-24 (POST Authorization Response Object).**
 
-- The Wallet `MUST` redirect the Authorization Response to the URI provided in Authorization Request `redirect_uri`
-  parameter.
+- Wallet posts [Authorization Response Object](#vp-authorization-response-object)
+  to [POST Authorization Response Object](#vp-post-response-object-endpoint) endpoint.
+- Verifier Backend finds a transaction by `state` parameter and updates the transaction with
+  the [Authorization Response Object](#vp-authorization-response-object).
+- Verifier Backend responds with `redirect_uri` with `response_code` parameter for the flow continuation.
 
 ---
-**Steps 18-19 (Authorization Response validation).**
+**Steps 25-28 (GET Authorization Response Object).**
 
-- The Verifier performs the `REQUIRED` [Authorization Response validation steps](#vp-response-validation-steps)
+- Wallet redirects the flow to `redirect_uri` with `response_code` parameter.
+- Verifier requests the [Authorization Response Object](#vp-authorization-response-object)
+  from [GET Authorization Response Object](#vp-get-response-object-endpoint) endpoint.
+- Verifier Backend finds the transaction by `transaction_id` and verifies that the `response_code` matches.
+
+**Steps 29-32 (Authorization Response Object processing).**
+
+- Verifier finds the Authorization Request Object by Authorization Response Object `state` parameter.
+- Verifier performs the `REQUIRED` [Authorization Response Object validation steps](#vp-response-validation-steps)
 - It `MUST` check if the Credential Issuer is trusted and not revoked. The exact methods to attest trust and validity
   are still under discussion in [EUDI-ARF].
-
-<a id="vp-authorization-request"></a>
-### Authorization Request
 
 <a id="vp-authorization-request-object"></a>
 **Authorization Request Object**
@@ -1498,45 +1555,74 @@ A non-normative example of the Presentation Definition Object:
 }
 ```
 
-<a id="vp-request-validation-steps"></a>
-#### Validation Steps
+<a id="vp-post-request-object-endpoint"></a>
+**POST Authorization Request Object Endpoint**
 
-- The Wallet `MUST` validate the [Authorization Request Object](#vp-authorization-request-object).
-- It`MUST` validate the [Presentation Definition](#vp-presentation-definition-object).
+1. The POST Authorization Request Object Endpoint is a **private** HTTP API at the Verifier Backend and `MUST` accept
+   HTTP `POST` request with parameters in the HTTP request message body using the `application/x-www-form-urlencoded`
+   format.
+2. It `MUST` use the `https` scheme.
 
-<a id="vp-verifier-metadata-validation-steps"></a>
-**Verifier Metadata validation steps**
-
-- The Wallet `MUST` validate that it supports the requested VP format and algorithms.
-- It `MUST` validate that the `client_name`, `client_uri` and `logo_uri` are present and in display them in consent view.
-
-<a id="vp-presentation-definition-validation-steps"></a>
-**Presentation Definition validation steps**
-
-- The Wallet `MUST` validate the [Presentation Definition Object](#vp-presentation-definition-object).
-- It `MUST` ignore any format property inside a Presentation Definition object if that format was not included in
-  the `vp_formats` property of the metadata.
-- It `MUST` select candidate Verifiable Credential(s) using the evaluation process described in Section 8
-  of [DIF.PresentationExchange].
-- It `MUST` display `purpose` claim and requested [Fields Object](#vp-fields-object) with corresponding translations
-  acquired from [Credentials Supported Display Object](#vci-credentials-supported-display-object) in consent view.
-
-<a id="vp-authorization-response"></a>
-### Authorization Response
+<a id="vp-post-request-object-parameters"></a>
+**Request Parameters**
 
 |Parameter|Description|Reference|
 |:----|:----|:----|
-|`vp_token`|JSON String that `MUST` contain a single CBOR encoded mDL.|[OpenID4VP]|
-|`presentation_submission`|JSON object that contains mappings between the requested Verifiable Credentials and where to find them within the returned VP Token.|[OpenID4VP], [DIF.PresentationExchange]|
-|`state`|It `MUST` be set to the authorization request `state` value.|[OpenID4VP]|
+|`request`|It `MUST` be a [Authorization Request Object](#vp-authorization-request-object).|[RFC 9101]|
+
+<a id="vp-post-request-object-response"></a>
+**Response**
+
+1. It `MUST` send `200 HTTP` status code on successful response.
+2. Response `MUST` be sent using `application/json` content type and contain following claims:
+
+|Claim|Description|Reference|
+|:----|:----|:----|
+|`request_uri`|It `MUST` be an [GET Request Object Endpoint](#vp-get-request-object-endpoint) URI where [Authorization Request Object](#vp-authorization-request-object) can be requested. Format of the URL `SHALL` be https://verifier-backend/request.jwt/{request_uri_id}, where `request_uri_id` `SHALL` link the posted [Authorization Request Object](#vp-authorization-request-object).|[OpenID4VP]|
+|`expiry_time`|It `MUST` be expiry time of the `request_uri` in seconds.|[OpenID4VP]|
+|`transaction_id`|It `MUST` be set to a UUIDv4 value to uniquely identify posted [Authorization Request Object](#vp-authorization-request-object).|[OpenID4VP]|
+|`response_code`|It `MUST` be set to a UUIDv4 value to link `response_code` to `transaction_id` when Response Object is posted at [POST Response Object Endpoint](#vp-post-response-object-endpoint).|[OpenID4VP]|
+
+3. It `MUST` persist `request_uri_id`, `expiry_time`, `transaction_id`, `response_code` and additionally `state` claim
+   from [Authorization Request Object](#vp-authorization-request-object) to link required data in Presentation Flow.
+
+<a id="vp-get-request-object-endpoint"></a>
+**GET Authorization Request Object Endpoint**
+
+1. The GET Request Object Endpoint is a **public** HTTP API at the Verifier Backend and `MUST` accept HTTP `GET` request
+   with path parameter https://verifier-backend/request.jwt/{request_uri_id}.
+2. It `MUST` use the `https` scheme.
+3. It `MUST` return [Authorization Request Object](#vp-authorization-request-object) linked to `requestUriId` request
+   path parameter.
+4. It `MUST` validate the `expiry_time` of the request object uri.
+
+<a id="vp-post-response-object-endpoint"></a>
+**POST Authorization Response Object Endpoint**
+
+1. The Authorization Response Object Endpoint is a **public** HTTP API at the Verifier Backend and `MUST` accept
+   HTTP `POST` request with parameters in the HTTP request message body using the `application/x-www-form-urlencoded`
+   format.
+2. It `MUST` use the `https` scheme.
+3. It `MUST` accept [Authorization Response Object](#vp-authorization-response-object) parameters as request parameters.
+4. It `MUST` link [Authorization Response Object](#vp-authorization-response-object) to `transaction_id` using `state`
+   claim from [Authorization Request Object](#vp-authorization-request-object)
+
+<a id="vp-authorization-response-object"></a>
+**Authorization Response Object**
+
+|Parameter|Description|Reference|
+|:----|:----|:----|
+|`vp_token`|JSON String that `SHALL` contain a single CBOR encoded mDL.|[OpenID4VP]|
+|`presentation_submission`|JSON object that `SHALL` contain mappings between the requested Verifiable Credentials and where to find them within the returned VP Token.|[OpenID4VP], [DIF.PresentationExchange]|
+|`state`|It `SHALL` be set to the authorization request `state` value.|[OpenID4VP]|
 
 <a id="vp-presentation-submission-object"></a>
 **Presentation Submission Object**
 
 |Property|Description|Reference|
 |:----|:----|:----|
-|`definition_id`|It `MUST` be set to Presentation Definition `id` this Presentation Submission is intended to.|[OpenID4VP], [DIF.PresentationExchange]|
-|`id`|It `MUST` be set to a UUIDv4 value to uniquely identify presentation submission.|[OpenID4VP], [DIF.PresentationExchange]|
+|`definition_id`|It `SHALL` be set to Presentation Definition `id` this Presentation Submission is intended to.|[OpenID4VP], [DIF.PresentationExchange]|
+|`id`|It `SHALL` be set to a UUIDv4 value to uniquely identify presentation submission.|[OpenID4VP], [DIF.PresentationExchange]|
 |`descriptor_map`|JSON array that contains [Input Descriptor Mapping Objects](#vp-input-descriptor-map-object). As single CBOR encoded mDL is returned in `vp_token`, it `SHALL` contain single mapping object with `path` mapping `$` to denote that CBOR encoded mDL is set directly in the `vp_token` element.|[OpenID4VP], [DIF.PresentationExchange]|
 
 <a id="vp-input-descriptor-map-object"></a>
@@ -1544,10 +1630,10 @@ A non-normative example of the Presentation Definition Object:
 
 |Property|Description|Reference|
 |:----|:----|:----|
-|`id`|It `MUST` be set to Input Descriptor `id` this Descriptor Object is intended to. It `MUST` be set to `org.iso.18013.5.1.mDL`.|[OpenID4VP], [DIF.PresentationExchange]|
-|`format`|It `MUST` be set to `mso_mdoc`.|[OpenID4VP], [DIF.PresentationExchange]|
-|`path`|It `MUST` be set to `$`. |[OpenID4VP], [DIF.PresentationExchange]|
-|`path_nested`|It `MUST NOT` be used. When mDL is expressed in CBOR encoding the `path_nested` parameter cannot be used to point to the location of the requested claims. The user claims will always be included in the `issuerSigned` element of the mDL document.|[OpenID4VP], [DIF.PresentationExchange]|
+|`id`|It `SHALL` be set to Input Descriptor `id` this Descriptor Object is intended to. It `MUST` be set to `org.iso.18013.5.1.mDL`.|[OpenID4VP], [DIF.PresentationExchange]|
+|`format`|It `SHALL` be set to `mso_mdoc`.|[OpenID4VP], [DIF.PresentationExchange]|
+|`path`|It `SHALL` be set to `$`. |[OpenID4VP], [DIF.PresentationExchange]|
+|`path_nested`|It `SHALL NOT` be used. When mDL is expressed in CBOR encoding the `path_nested` parameter cannot be used to point to the location of the requested claims. The user claims will always be included in the `issuerSigned` element of the mDL document.|[OpenID4VP], [DIF.PresentationExchange]|
 
 A non-normative example of the Presentation Submission Object:
 
@@ -1565,14 +1651,64 @@ A non-normative example of the Presentation Submission Object:
 }
 ```
 
-<a id="vp-error-response"></a>
-#### Error Response
+<a id="vp-get-response-object-endpoint"></a>
+**GET Authorization Response Object Endpoint**
 
-- The Wallet `MUST` follow the error response rules as defined in [OpenID4VP] Section 6.4
+1. The GET Authorization Response Object Endpoint is a **private** HTTP API at the Verifier Backend and `MUST` accept
+   HTTP `GET` request.
+2. It `MUST` use the `https` scheme.
+
+<a id="vp-get-response-object-parameters"></a>
+**Request Parameters**
+
+|Parameter|Description|Reference|
+|:----|:----|:----|
+|`transaction_id`|It `MUST` be set to value returned from [POST Request Object Endpoint](#vp-post-request-object-endpoint).|[OpenID4VP]|
+|`response_code`|It `MUST` be set to value returned from [POST Request Object Endpoint](#vp-post-request-object-endpoint).|[OpenID4VP]|
+
+<a id="vp-post-request-object-response"></a>
+**GET Response Object Response**
+
+1. It `MUST` return the Response Object posted at [POST Response Object Endpoint](#vp-post-request-object-response) that
+   is linked to `transaction_id` and `response_code` parameters.
+
+<a id="vp-authorization-request"></a>
+**Authorization Request**
+
+|Parameter|Description|Reference|
+|:----|:----|:----|
+|`client_id`|It `MUST` be set to DNS name and match a dNSName Subject Alternative Name (SAN) [RFC5280] entry in the leaf certificate passed with the request header `x5c` claim. It is also used to bind the Verifiable Presentation to the intended audience.|[OpenID4VP]|
+|`request_uri`|It `MUST` be set to the same value as obtained from [POST Request Object Endpoint](#vp-post-request-object-endpoint) response.|[RFC 9126]|
+
+<a id="vp-request-validation-steps"></a>
+#### Validation Steps
+
+- The Wallet `MUST` validate the [Authorization Request Object](#vp-authorization-request-object).
+- It`MUST` validate the [Presentation Definition](#vp-presentation-definition-object).
+
+<a id="vp-verifier-metadata-validation-steps"></a>
+**Verifier Metadata validation steps**
+
+- The Wallet `MUST` validate that it supports the requested VP format and algorithms.
+- It `MUST` validate that the `client_name`, `client_uri` and `logo_uri` are present and in display them in consent
+  view.
+
+<a id="vp-presentation-definition-validation-steps"></a>
+**Presentation Definition validation steps**
+
+- The Wallet `MUST` validate the [Presentation Definition Object](#vp-presentation-definition-object).
+- It `MUST` ignore any format property inside a Presentation Definition object if that format was not included in
+  the `vp_formats` property of the metadata.
+- It `MUST` select candidate Verifiable Credential(s) using the evaluation process described in Section 8
+  of [DIF.PresentationExchange].
+- It `MUST` display `purpose` claim and requested [Fields Object](#vp-fields-object) with corresponding translations
+  acquired from [Credentials Supported Display Object](#vci-credentials-supported-display-object) in consent view.
 
 <a id="vp-response-validation-steps"></a>
 #### Validation Steps
 
+- Verifier `MUST` process the `presentation_submission` parameter to get instructions how to process the `vp_token`
+  parameter.
 - Verifier `MUST` validate `vp_token` as described in [OpenID4VP] Section 6.5.
 - Verifier `MUST` validate the signature `mDL` as described in [ISO/IEC 18013-1:2018] Section 9.3.
 - Verifier `MUST` validate that `client_id` and `nonce` values are bound to the returned credential by
@@ -1661,9 +1797,8 @@ A non-normative example of the Presentation Submission Object:
 |:----|:----|:----|
 |`type`|It `MUST` be set to `openid_credential`|[RFC 9396], [OpenID4VCI]|
 |`format`|It `MUST` be set to `mso_doc`|[RFC 9396], [OpenID4VCI]|
-|`locations`|If the Credential Issuer metadata contains an `authorization_server` parameter the `locations` field `MUST` be set to the Credential Issuer Identifier value. The value `MUST` be used as `aud` claim in Access Token returned by Token Endpoint. |[RFC 9396], [OpenID4VCI]|
+|`locations`|If the Credential Issuer metadata contains an `authorization_servers` (meaning Credential Issuer and Authorization Server are different entities) parameter the `locations` field `MUST` be set to the Credential Issuer Identifier value. The value `MUST` be used as `aud` claim in Access Token returned by Token Endpoint. |[RFC 9396], [OpenID4VCI]|
 |`doctype`|JSON string identifying the credential type. It `MUST` be set to `org.iso.18013.5.1.mDL` as defined in ISO/IEC 18013-5:2021 |[RFC 9396], [OpenID4VCI], [ISO/IEC 18013-5:2021]|
-|`claims`|A JSON object containing a list of name/value pairs, where the name is a certain namespace as defined in ISO/IEC 18013-5:2021 (or any profile of it) and the value is a JSON object. It `MUST` defined as in [Authorization Details Claims Object](#vci-authorization-details-claims-object).|[RFC 9396], [OpenID4VCI], [ISO/IEC 18013-5:2021]|
 
 <a id="vci-authorization-claims-object"></a>
 **Authorization Details Claims Object**
@@ -1681,7 +1816,8 @@ A non-normative example of the Presentation Submission Object:
 2. All request parameters `MUST` appear as claims of the JWT representing the authorization request
    except `client_assertion` and `client_assertion_type` as required in [RFC 9126] Section 3.
 2. It `MUST` validate the signature of the `Request Object` using the algorithm specified in the `alg` header
-   parameter ([RFC 9126], [RFC 9101]) and the public key that can be retrieved from the [WIA](#wia-jwt) `cnf` claim using
+   parameter ([RFC 9126], [RFC 9101]) and the public key that can be retrieved from the [WIA](#wia-jwt) `cnf` claim
+   using
    the `kid` header claim of the `Request Object`.
 3. It `MUST` check that the used algorithm for signing the request in the `alg` header claim is among the appropriate
    cryptographic algorithms defined in [RFC 7515].
@@ -1846,13 +1982,13 @@ A non-normative example of the Presentation Submission Object:
 
 |Claim|Description|Reference|
 |:----|:----|:----|
-|`iss`|It `MUST` be an HTTPS URL that uniquely identifies the Authorization Server. The QEAA Provider `MUST` verify that this value matches the trusted Authorization Server.|[RFC 9068]| RFC 7519|
-|`sub`|It identifies the subject of the JWT. It `MUST` be set to the `unique_id` claim value of the [PID](#pid-attestation).|[RFC 9068]| | OpenId.Core| RFC 7519|
+|`iss`|It `MUST` be an HTTPS URL that uniquely identifies the Authorization Server. The QEAA Provider `MUST` verify that this value matches the trusted Authorization Server.|[RFC 9068], [RFC 7519]|
+|`sub`|It identifies the subject of the JWT. It `MUST` be set to the `personal_identification_number` claim value from `eu.europa.ec.eudi.pid.ee.1` domestic namespace of the [PID](#pid-attestation).|[RFC 9068], [OpenId.Core], [RFC 7519]|
 |`client_id`|It `MUST` be set to `sub` claim value of the [WIA](#wia-jwt).|[RFC 9068]|
 |`aud`|It `MUST` be set to the Credential Issuer Identifier.|[RFC 9068]|
-|`iat`|It `MUST` be set to the time of the JWT issuance as a UNIX Timestamp|[RFC 9068]| RFC 7519|
-|`exp`|It `MUST` be set to the expiry time of the JWT as a UNIX Timestamp|[RFC 9068]| RFC 7519|
-|`cnf`|JSON object. It `MUST` contain single claim `jkt`. It uses `JWK SHA-256 Thumbprint Confirmation Method`. The value of the `jkt` member `MUST` be the base64url encoding of the JWK SHA-256 Thumbprint of the DPoP public key (in JWK format) to which the Access Token is bound.|[RFC 9449]| RFC 7638| [RFC 7515]|
+|`iat`|It `MUST` be set to the time of the JWT issuance as a UNIX Timestamp|[RFC 9068], [RFC 7519]|
+|`exp`|It `MUST` be set to the expiry time of the JWT as a UNIX Timestamp|[RFC 9068], [RFC 7519]|
+|`cnf`|JSON object. It `MUST` contain single claim `jkt`. It uses `JWK SHA-256 Thumbprint Confirmation Method`. The value of the `jkt` member `MUST` be the base64url encoding of the JWK SHA-256 Thumbprint of the DPoP public key (in JWK format) to which the Access Token is bound.|[RFC 9449], [RFC 7638], [RFC 7515]|
 
 <a id="vci-token-response-validation-steps"></a>
 #### Validation Steps
@@ -1888,7 +2024,6 @@ A non-normative example of the Presentation Submission Object:
 |:----|:----|:----|
 |`format`|Format of the Credential to be issued. It `MUST` be set to `mso_mdoc` as published in Credential Issuer Metadata.|[OPENID4VCI]|
 |`doctype`|JSON string identifying the credential type as defined in [ISO/IEC 18013-5:2021]. It `MUST` be set to `org.iso.18013.5.1.mDL`. |[OPENID4VCI], Section E.2.5|
-|`claims`|A JSON object containing a list of name/value pairs, where the name is a certain namespace as defined in ISO/IEC 18013-5:2021 (or any profile of it) and the value is a JSON object. It `MUST` defined as in [Credential Request Claims Object](#vci-credential-request-claims-object).|[OPENID4VCI], Section E.2.2, E.2.5|
 |`proof`|JSON object containing proof of possession of the key material the issued credential shall be bound to. The proof object `MUST` contain the mandatory claims as defined in [Credential Request Proof Object](#vci-credential-request-proof-object) table. |[OPENID4VCI]|
 
 <a id="vci-credentials-request-claims-object"></a>
@@ -1946,7 +2081,7 @@ In addition to the values that are defined in the Token Endpoint, the proof `MUS
 2. If request to this endpoint is made without `DPoP proof JWT` or the `Access Token` is not sender-constrained the
    server `MUST` return `401 HTTP` response status with `WWW-Authenticate` header as defined in [RFC 9449], Section 7.1
 3. It must `MUST` validate the sender-constrained access token from `Authorization` header.
-4. It must `MUST` validate the [Credential Request](#vci-credential-request) parameters.
+4. It must `MUST` validate the [Credential Request](#vci-credential-request) parameters and return errors as described in [OPENID4VCI], Section 7.3.1.
 5. It must `MUST` validate the `jwt Key Proof` as described in [OPENID4VCI], Section 7.2.2.
 
 <a id="vci-credential-response"></a>
@@ -1957,7 +2092,7 @@ In addition to the values that are defined in the Token Endpoint, the proof `MUS
 3. On failed Credential Response it `MUST` use error codes as described in [OPENID4VCI], Section 7.3.1.
 4. Credential Response `MUST` be sent using `application/json` content type and contain following claims:
 
-|Claim|Description|Reference|
+|Parameter|Description|Reference|
 |:----|:----|:----|
 |`format`|It `MUST` be set to `mso_mdoc`|[OPENID4VCI]|
 |`credential`|Contains the issued QEAA. It `MUST` be base64url-encoded JSON string in [ISO/IEC 18013-5:2021] format. It `MUST` contain CBOR encoded mDL as described in [MDOC-CBOR Format](#mdoc-cbor-format) section.|[OPENID4VCI], Appendix E|
@@ -1971,12 +2106,41 @@ In addition to the values that are defined in the Token Endpoint, the proof `MUS
    according to [Credential Response](#vci-credential-response)
 2. It `MUST` validate that the QEAA Provider is not revoked before the issued credential issuing time.
 3. It `MUST` validate that the Issued Credential is signed by corresponding QEAA Provider.
-4. It `MUST` store `c_nonce`, `c_nonce_expires_in` claims to perform credential update without authorization code flow.
+4. It `MUST` store `c_nonce`, `c_nonce_expires_in` claims to perform credential update in the future.
 5. It `MUST` perform credential update before `c_nonce_expires_in`.
 
-## 5.5. Metadata Endpoints
+## 5.5. Credential Nonce Endpoint
 
-### 5.5.1. Authorization Server
+1. The Credential Nonce Endpoint is an HTTP API at the QEAA Provider and `MUST` accept
+   HTTP `POST` request with parameters in the HTTP request message body using the `application/x-www-form-urlencoded`
+   format.
+2. This endpoint is requested by Authorization Server as alternative flow to issue credential nonce that Credential
+   Issuer can trust. Alternately the Authorization Server does not make credential nonce request and would not return it
+   in Token Endpoint response and is instead acquired from Credential endpoint error response as described
+   in [OpenID4VCI].
+
+<a id="vci-credential-nonce-request"></a>
+## Credential Nonce Request
+
+|Parameter|Description|Reference|
+|:----|:----|:----|
+|`ath`|Hash of the `Access Token`.|[OpenID4VCI]|
+
+<a id="vci-credential-nonce-response"></a>
+## Credential Nonce Response
+
+1. It `MUST` send `200 HTTP` status code on successful Credential Nonce Response.
+2. Credential Nonce Response `MUST` be sent using `application/json` content type and contain following claims:
+3. The `c_nonce` `SHALL` be linked to the `ath` request parameter for later validation in Credential Endpoint, where
+   credential issuance is requested with sender constrained access token.
+
+|Claim|Description|Reference|
+|:----|:----|:----|
+|`c_nonce`|JSON string containing a nonce value to be used to create a proof of possession of the key material when requesting a further credential or for the renewal of a credential.|[OpenID4VCI]|
+|`c_nonce_expires_in`|Expiry time of the `c_nonce` in seconds.|[OpenID4VCI]|
+## 5.6. Metadata Endpoints
+
+### 5.6.1. Authorization Server
 
 Authorization Servers publishing metadata `MUST` make a JSON document available at the path formed by concatenating the
 string `/.well-known/oauth-authorization-server` to the `Authorization Server Issuer Identifier`. If the Authorization
@@ -2031,7 +2195,7 @@ tokens using DPoP and PKCE.
 }
 ```
 
-### 5.5.2. Credential Issuer
+### 5.6.2. Credential Issuer
 
 1. The Credential Issuer’s configuration `SHALL` be retrieved using the Credential Issuer Identifier.
 2. Credential Issuers publishing metadata `MUST` make a JSON document available at the path formed by concatenating the
@@ -2047,10 +2211,11 @@ with [ISO/IEC 18013-5:2021]
 |Claim|Description|Reference|
 |:----|:----|:----|
 |`credential_issuer`|The Credential Issuer Identifier.|[OpenID4VCI]|
-|`authorization_server`|Identifier of the OAuth 2.0 Authorization Server the Credential Issuer relies on for authorization. If this element is omitted, the entity providing the Credential Issuer is also acting as the AS, i.e., the Credential Issuer’s identifier is used as the OAuth 2.0 Issuer value to obtain the Authorization Server metadata|[OpenID4VCI], [RFC 8414]|
-|`credential_endpoint`|URL of the Credential Issuer’s Credential Endpoint. This URL `MUST` use the https scheme and `MAY` contain port, path, and query parameter components.|[OpenID4VCI]|
+|`authorization_servers`|Identifiers of the OAuth 2.0 Authorization Servers the Credential Issuer relies on for authorization. If this element is omitted, the entity providing the Credential Issuer is also acting as the AS, i.e., the Credential Issuer’s identifier is used as the OAuth 2.0 Issuer value to obtain the Authorization Server metadata|[OpenID4VCI], [RFC 8414]|
+|`credential_endpoint`|URL of the Credential Endpoint. This URL `MUST` use the https scheme and `MAY` contain port, path, and query parameter components.|[OpenID4VCI]|
+|`credential_nonce_endpoint`|URL of the Credential Nonce Endpoint. This URL `MUST` use the https scheme and `MAY` contain port, path, and query parameter components.|[OpenID4VCI]|
 |`display`|An array of objects, where each object contains display properties of a Credential Issuer for a certain language. It `MUST` defined as in [Display Object](#vci-display-object).|[OpenID4VCI]|
-|`credentials_supported`|A JSON array containing a list of JSON objects, each of them representing metadata about a separate credential type that the Credential Issuer can issue. The JSON objects in the array `MUST` conform to the structure defined in OpenID4VCI, Section 10.2.3.1. and as defined in [Credentials Supported Object](#vci-credentials-supported-object)|[OpenID4VCI]|
+|`credential_configurations_supported`|A JSON array containing a list of JSON objects, each of them representing metadata about a separate credential type that the Credential Issuer can issue. The JSON objects in the array `MUST` conform to the structure defined in OpenID4VCI, Section 10.2.3.1. and as defined in [Credentials Supported Object](#vci-credentials-supported-object)|[OpenID4VCI]|
 
 <a id="vci-display-object"></a>
 **Display Object**
@@ -2067,7 +2232,7 @@ with [ISO/IEC 18013-5:2021]
 |:----|:----|:----|
 |`format`|A JSON string identifying the format of this credential. It `MUST` be set to `mso_mdoc`.|[OpenID4VCI]|
 |`doctype`| JSON string identifying the credential type as defined in ISO/IEC 18013-5:2021. It `MUST` be set to `org.iso.18013.5.1.mDL`.|[OpenID4VCI], [ISO/IEC 18013-5:2021]|
-|`cryptographic_binding_methods_supported`|A JSON array containing a list of supported cryptographic binding methods. It `MUST` be set to `cose_key`.|[OpenID4VCI]|
+|`cryptographic_binding_methods_supported`|A JSON array containing a list of supported cryptographic binding methods. It `MUST` be set to `mso`.|[OpenID4VCI]|
 |`proof_types_supported`|A JSON array of case sensitive strings, each representing `proof_type` that the Credential Issuer supports. It `MUST` be set to `jwk`.|[OpenID4VCI]|
 |`display`|A JSON array containing a list of JSON objects, where each object contains the display properties of the supported credential for a certain language. It `MUST` defined as in [Credentials Supported Display Object](#vci-credentials-supported-display-object).|[OpenID4VCI]|
 |`claims`|A JSON object containing a list of name/value pairs, where the name is a certain namespace as defined in ISO/IEC 18013-5:2021 (or any profile of it) and the value is a JSON object. It `MUST` defined as in [Credentials Supported Claims Object](#vci-credentials-supported-claims-object).|[OpenID4VCI]|
@@ -2097,107 +2262,109 @@ credential type and minimal set of mandatory claims as defined in [ISO/IEC 18013
 
 ```json
 {
-  "credential_issuer": "https://credential-issuer.example.com",
-  "authorization_server": "https://as.example.com",
-  "credential_endpoint": "https://credential-issuer.example.com/credential",
-  "display": [
-    {
-      "name": "Transpordiamet",
-      "locale": "et-EE"
-    },
-    {
-      "name": "Transport Administration",
-      "locale": "en-US"
-    }
-  ],
-  "credentials_supported": [
-    {
-      "format": "mso_mdoc",
-      "doctype": "org.iso.18013.5.1.mDL",
-      "cryptographic_binding_methods_supported": [
-        "cose_key"
-      ],
-      "proof_types_supported": [
-        "jwt"
-      ],
-      "display": [
-        {
-          "name": "Mobiilne juhiluba",
-          "locale": "et-EE",
-          "logo": {
-            "url": "https://examplestate.com/public/mdl.png",
-            "alt_text": "mobiilse juhiloa kandiline kujund"
-          },
-          "background_color": "#12107c",
-          "text_color": "#FFFFFF"
-        },
-        {
-          "name": "Mobile Driving License",
-          "locale": "en-US",
-          "logo": {
-            "url": "https://examplestate.com/public/mdl.png",
-            "alt_text": "a square figure of a mobile driving licence"
-          },
-          "background_color": "#12107c",
-          "text_color": "#FFFFFF"
-        }
-      ],
-      "claims": {
-        "org.iso.18013.5.1": {
-          "given_name": {
-            "mandatory": true,
-            "display": [
-              {
-                "name": "Eesnimi",
-                "locale": "et-EE"
-              },
-              {
-                "name": "Given Name",
-                "locale": "en-US"
-              }
-            ]
-          },
-          "family_name": {
-            "mandatory": true,
-            "display": [
-              {
-                "name": "Perekonnanimi",
-                "locale": "et-EE"
-              },
-              {
-                "name": "Surname",
-                "locale": "en-US"
-              }
-            ]
-          },
-          "birth_date": {
-            "mandatory": true
-          },
-          "issue_date": {
-            "mandatory": true
-          },
-          "expiry_date": {
-            "mandatory": true
-          },
-          "issuing_country": {
-            "mandatory": true
-          },
-          "issuing_authority": {
-            "mandatory": true
-          },
-          "document_number": {
-            "mandatory": true
-          },
-          "portrait": {
-            "mandatory": true
-          },
-          "driving_privileges": {
-            "mandatory": true
-          }
-        }
+   "credential_issuer": "https://credential-issuer.example.com",
+   "authorization_servers": [
+      "https://as.example.com"
+   ],
+   "credential_endpoint": "https://credential-issuer.example.com/credential",
+   "display": [
+      {
+         "name": "Transpordiamet",
+         "locale": "et-EE"
+      },
+      {
+         "name": "Transport Administration",
+         "locale": "en-US"
       }
-    }
-  ]
+   ],
+   "credentials_supported": {
+      "org.iso.18013.5.1.mDL": {
+         "format": "mso_mdoc",
+         "doctype": "org.iso.18013.5.1.mDL",
+         "cryptographic_binding_methods_supported": [
+            "mso"
+         ],
+         "proof_types_supported": [
+            "jwt"
+         ],
+         "display": [
+            {
+               "name": "Mobiilne juhiluba",
+               "locale": "et-EE",
+               "logo": {
+                  "url": "https://examplestate.com/public/mdl.png",
+                  "alt_text": "mobiilse juhiloa kandiline kujund"
+               },
+               "background_color": "#12107c",
+               "text_color": "#FFFFFF"
+            },
+            {
+               "name": "Mobile Driving License",
+               "locale": "en-US",
+               "logo": {
+                  "url": "https://examplestate.com/public/mdl.png",
+                  "alt_text": "a square figure of a mobile driving licence"
+               },
+               "background_color": "#12107c",
+               "text_color": "#FFFFFF"
+            }
+         ],
+         "claims": {
+            "org.iso.18013.5.1": {
+               "given_name": {
+                  "mandatory": true,
+                  "display": [
+                     {
+                        "name": "Eesnimi",
+                        "locale": "et-EE"
+                     },
+                     {
+                        "name": "Given Name",
+                        "locale": "en-US"
+                     }
+                  ]
+               },
+               "family_name": {
+                  "mandatory": true,
+                  "display": [
+                     {
+                        "name": "Perekonnanimi",
+                        "locale": "et-EE"
+                     },
+                     {
+                        "name": "Surname",
+                        "locale": "en-US"
+                     }
+                  ]
+               },
+               "birth_date": {
+                  "mandatory": true
+               },
+               "issue_date": {
+                  "mandatory": true
+               },
+               "expiry_date": {
+                  "mandatory": true
+               },
+               "issuing_country": {
+                  "mandatory": true
+               },
+               "issuing_authority": {
+                  "mandatory": true
+               },
+               "document_number": {
+                  "mandatory": true
+               },
+               "portrait": {
+                  "mandatory": true
+               },
+               "driving_privileges": {
+                  "mandatory": true
+               }
+            }
+         }
+      }
+   }
 }
 ```
 

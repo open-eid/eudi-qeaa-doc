@@ -75,9 +75,8 @@
 |:----|:----|:----|
 |`type`|It `MUST` be set to `openid_credential`|[RFC 9396], [OpenID4VCI]|
 |`format`|It `MUST` be set to `mso_doc`|[RFC 9396], [OpenID4VCI]|
-|`locations`|If the Credential Issuer metadata contains an `authorization_server` parameter the `locations` field `MUST` be set to the Credential Issuer Identifier value. The value `MUST` be used as `aud` claim in Access Token returned by Token Endpoint. |[RFC 9396], [OpenID4VCI]|
+|`locations`|If the Credential Issuer metadata contains an `authorization_servers` (meaning Credential Issuer and Authorization Server are different entities) parameter the `locations` field `MUST` be set to the Credential Issuer Identifier value. The value `MUST` be used as `aud` claim in Access Token returned by Token Endpoint. |[RFC 9396], [OpenID4VCI]|
 |`doctype`|JSON string identifying the credential type. It `MUST` be set to `org.iso.18013.5.1.mDL` as defined in ISO/IEC 18013-5:2021 |[RFC 9396], [OpenID4VCI], [ISO/IEC 18013-5:2021]|
-|`claims`|A JSON object containing a list of name/value pairs, where the name is a certain namespace as defined in ISO/IEC 18013-5:2021 (or any profile of it) and the value is a JSON object. It `MUST` defined as in [Authorization Details Claims Object](#vci-authorization-details-claims-object).|[RFC 9396], [OpenID4VCI], [ISO/IEC 18013-5:2021]|
 
 <a id="vci-authorization-claims-object"></a>
 **Authorization Details Claims Object**
@@ -95,7 +94,8 @@
 2. All request parameters `MUST` appear as claims of the JWT representing the authorization request
    except `client_assertion` and `client_assertion_type` as required in [RFC 9126] Section 3.
 2. It `MUST` validate the signature of the `Request Object` using the algorithm specified in the `alg` header
-   parameter ([RFC 9126], [RFC 9101]) and the public key that can be retrieved from the [WIA](#wia-jwt) `cnf` claim using
+   parameter ([RFC 9126], [RFC 9101]) and the public key that can be retrieved from the [WIA](#wia-jwt) `cnf` claim
+   using
    the `kid` header claim of the `Request Object`.
 3. It `MUST` check that the used algorithm for signing the request in the `alg` header claim is among the appropriate
    cryptographic algorithms defined in [RFC 7515].

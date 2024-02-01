@@ -10,7 +10,8 @@ Credential from the End-User to the Relying Party (RP), **without involvement of
    and [Proof Key for Code Exchange (PKCE)][RFC 7636] as recommended in [OpenID4VCI], Section 3.4.
 3. It uses sender-constrained access tokens by [Demonstrating Proof of Possession (DPoP)][RFC 9449].
 4. It uses `attest_jwt_client_auth` Client Authentication
-   method ([OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth]) in PAR and Token Endpoint.
+   method ([OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth]) in PAR and Token
+   Endpoint.
 
 <a id="vci-issuance-flow"></a>
 ### Issuance Flow
@@ -88,9 +89,11 @@ sequenceDiagram
 ---
 **Steps 3-7 (Discovery).**
 
-- Wallet Instance `SHALL` request QEAA Provider metadata and use `authorization_server` claim to request Authorization
-  Server metadata. The metadata contains technical information about the Issuer and translations/display data for the
-  offered credentials.
+- Wallet Instance `SHALL` request QEAA Provider metadata and use `authorization_servers` claim to request Authorization
+  Server metadata. When there are multiple entries in the array, the Wallet may be able to determine which AS to use by
+  querying the metadata; for example, by examining the grant_types_supported values, the Wallet can filter the server to
+  use based on the grant type it plans to use. The metadata contains technical information about the Issuer and
+  translations/display data for the offered credentials.
 - It `MUST` check if the QEAA Provider/Authorization Server are trusted and not revoked. The exact methods to attest
   trust and validity are still under discussion in [EUDI-ARF].
 
@@ -129,7 +132,8 @@ sequenceDiagram
 
 - The Authorization Server performs `REQUIRED` validation checks as described in PAR Validation Steps section. In
   summary:
-    - It `MUST` authenticate the Wallet Instance using [OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth].
+    - It `MUST` authenticate the Wallet Instance
+      using [OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth].
     - It `MUST` request Wallet Provider/Wallet Instance/QEAA Provider revocation states.
     - It `MUST` validate the `Request Object`.
 - The Authorization Server `MUST` create a new `session` related to `client_id`.
@@ -183,15 +187,16 @@ sequenceDiagram
 
 - The Authorization Server performs `REQUIRED` validation checks as described in Token Request Validation Steps. In
   summary:
-    - It `MUST` authenticate the Wallet Instance using [OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth].
+    - It `MUST` authenticate the Wallet Instance
+      using [OAuth 2.0 Attestation-Based Client Authentication][attestation-based-client-auth].
     - It `MUST` validate the DPoP proof for Token Endpoint.
     - It `MUST` validate the `Token Request`.
 
 ---
 **Step 29-32 (Token Response).**
 
-- Due to the Requirement 11 the `c_nonce` has to be requested from QEAA Issuer Nonce Endpoint or alternately not be
-  returned by Token Endpoint and instead acquired from Credential endpoint error response as described in [OpenID4VCI].
+- The `c_nonce` has to be requested from QEAA Issuer Nonce Endpoint or alternately acquired from Credential endpoint
+  error response as described in [OpenID4VCI].
 - If the validation is successful, it `MUST` issue an `Access Token` bound to the DPoP key and a `c_nonce`, that is
   used to create a proof of possession of key material when requesting a Credential Endpoint.
 

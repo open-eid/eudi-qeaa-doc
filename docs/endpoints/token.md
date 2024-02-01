@@ -95,13 +95,13 @@
 
 |Claim|Description|Reference|
 |:----|:----|:----|
-|`iss`|It `MUST` be an HTTPS URL that uniquely identifies the Authorization Server. The QEAA Provider `MUST` verify that this value matches the trusted Authorization Server.|[RFC 9068]| RFC 7519|
-|`sub`|It identifies the subject of the JWT. It `MUST` be set to the `unique_id` claim value of the [PID](#pid-attestation).|[RFC 9068]| | OpenId.Core| RFC 7519|
+|`iss`|It `MUST` be an HTTPS URL that uniquely identifies the Authorization Server. The QEAA Provider `MUST` verify that this value matches the trusted Authorization Server.|[RFC 9068], [RFC 7519]|
+|`sub`|It identifies the subject of the JWT. It `MUST` be set to the `personal_identification_number` claim value from `eu.europa.ec.eudi.pid.ee.1` domestic namespace of the [PID](#pid-attestation).|[RFC 9068], [OpenId.Core], [RFC 7519]|
 |`client_id`|It `MUST` be set to `sub` claim value of the [WIA](#wia-jwt).|[RFC 9068]|
 |`aud`|It `MUST` be set to the Credential Issuer Identifier.|[RFC 9068]|
-|`iat`|It `MUST` be set to the time of the JWT issuance as a UNIX Timestamp|[RFC 9068]| RFC 7519|
-|`exp`|It `MUST` be set to the expiry time of the JWT as a UNIX Timestamp|[RFC 9068]| RFC 7519|
-|`cnf`|JSON object. It `MUST` contain single claim `jkt`. It uses `JWK SHA-256 Thumbprint Confirmation Method`. The value of the `jkt` member `MUST` be the base64url encoding of the JWK SHA-256 Thumbprint of the DPoP public key (in JWK format) to which the Access Token is bound.|[RFC 9449]| RFC 7638| [RFC 7515]|
+|`iat`|It `MUST` be set to the time of the JWT issuance as a UNIX Timestamp|[RFC 9068], [RFC 7519]|
+|`exp`|It `MUST` be set to the expiry time of the JWT as a UNIX Timestamp|[RFC 9068], [RFC 7519]|
+|`cnf`|JSON object. It `MUST` contain single claim `jkt`. It uses `JWK SHA-256 Thumbprint Confirmation Method`. The value of the `jkt` member `MUST` be the base64url encoding of the JWK SHA-256 Thumbprint of the DPoP public key (in JWK format) to which the Access Token is bound.|[RFC 9449], [RFC 7638], [RFC 7515]|
 
 <a id="vci-token-response-validation-steps"></a>
 #### Validation Steps

@@ -33,7 +33,7 @@ with [ISO/IEC 18013-5:2021]
 |:----|:----|:----|
 |`format`|A JSON string identifying the format of this credential. It `MUST` be set to `mso_mdoc`.|[OpenID4VCI]|
 |`doctype`| JSON string identifying the credential type as defined in ISO/IEC 18013-5:2021. It `MUST` be set to `org.iso.18013.5.1.mDL`.|[OpenID4VCI], [ISO/IEC 18013-5:2021]|
-|`cryptographic_binding_methods_supported`|A JSON array containing a list of supported cryptographic binding methods. It `MUST` be set to `mso`.|[OpenID4VCI]|
+|`cryptographic_binding_methods_supported`|A JSON array containing a list of supported cryptographic binding methods. It `MUST` be set to `cose_key`.|[OpenID4VCI]|
 |`proof_types_supported`|Object that describes specifics of the key proof(s) that the Credential Issuer supports. This object contains a list of name/value pairs, where each name is a unique identifier of the supported proof type(s). This identifier is also used by the Wallet in the [Credential Request](#vci-credential-request) as `proof_type` claim. It `MUST` contain `jwk` with JSON array `proof_signing_alg_values_supported` with supported algorithms as value.|[OpenID4VCI]|
 |`display`|A JSON array containing a list of JSON objects, where each object contains the display properties of the supported credential for a certain language. It `MUST` defined as in [Credentials Supported Display Object](#vci-credentials-supported-display-object).|[OpenID4VCI]|
 |`claims`|A JSON object containing a list of name/value pairs, where the name is a certain namespace as defined in ISO/IEC 18013-5:2021 (or any profile of it) and the value is a JSON object. It `MUST` defined as in [Credentials Supported Claims Object](#vci-credentials-supported-claims-object).|[OpenID4VCI]|

@@ -21,6 +21,7 @@ all member states, while meeting the necessary security, privacy, and user exper
 |1.0.1|07.12.2023|Token request redirect_uri parameter description fix. Removed expires_in from token response. Removed the max value requirement for c_nonce_expires_in parameter.|
 |1.0.2|20.12.2023|Requirements section updates. Potential logo and disclaimer.|
 |1.0.3|01.02.2024|Renamed doctype parameter to credential_configuration_id and removed claims parameter from PAR Authorization Details Object. Removed claims parameter from credential request. Updated the Presentation Flow to use sending Authorization Request Object by reference and sending Authorization Response using response mode `direct_post`. Added Credential Nonce endpoint specification and `credential_nonce_endpoint` metadata parameter. Renamed credential issuer metadata parameter `credentials_supported` to `credential_configurations_supported`.|
+|1.0.4|28.03.2024|Changed the credential issuer metadata `proof_types` structure from an array to a `proof_types_supported` map that contains a `proof_signing_alg_values_supported` parameter. Changed `cryptographic_binding_methods_supported` value from `mso` to `cose_key`. Removed `format` parameter from [Credential Response](#vci-credential-response).|
 # Keywords
 
 This document uses the capitalized
@@ -2094,7 +2095,6 @@ In addition to the values that are defined in the Token Endpoint, the proof `MUS
 
 |Parameter|Description|Reference|
 |:----|:----|:----|
-|`format`|It `MUST` be set to `mso_mdoc`|[OPENID4VCI]|
 |`credential`|Contains the issued QEAA. It `MUST` be base64url-encoded JSON string in [ISO/IEC 18013-5:2021] format. It `MUST` contain CBOR encoded mDL as described in [MDOC-CBOR Format](#mdoc-cbor-format) section.|[OPENID4VCI], Appendix E|
 |`c_nonce`|JSON string containing a nonce value to be used to create a proof of possession of the key material when requesting a further credential or for the renewal of a credential.|[OPENID4VCI]|
 |`c_nonce_expires_in`|JSON integer corresponding to the `c_nonce` lifetime in seconds.|[OPENID4VCI]|
@@ -2232,8 +2232,8 @@ with [ISO/IEC 18013-5:2021]
 |:----|:----|:----|
 |`format`|A JSON string identifying the format of this credential. It `MUST` be set to `mso_mdoc`.|[OpenID4VCI]|
 |`doctype`| JSON string identifying the credential type as defined in ISO/IEC 18013-5:2021. It `MUST` be set to `org.iso.18013.5.1.mDL`.|[OpenID4VCI], [ISO/IEC 18013-5:2021]|
-|`cryptographic_binding_methods_supported`|A JSON array containing a list of supported cryptographic binding methods. It `MUST` be set to `mso`.|[OpenID4VCI]|
-|`proof_types_supported`|A JSON array of case sensitive strings, each representing `proof_type` that the Credential Issuer supports. It `MUST` be set to `jwk`.|[OpenID4VCI]|
+|`cryptographic_binding_methods_supported`|A JSON array containing a list of supported cryptographic binding methods. It `MUST` be set to `cose_key`.|[OpenID4VCI]|
+|`proof_types_supported`|Object that describes specifics of the key proof(s) that the Credential Issuer supports. This object contains a list of name/value pairs, where each name is a unique identifier of the supported proof type(s). This identifier is also used by the Wallet in the [Credential Request](#vci-credential-request) as `proof_type` claim. It `MUST` contain `jwk` with JSON array `proof_signing_alg_values_supported` with supported algorithms as value.|[OpenID4VCI]|
 |`display`|A JSON array containing a list of JSON objects, where each object contains the display properties of the supported credential for a certain language. It `MUST` defined as in [Credentials Supported Display Object](#vci-credentials-supported-display-object).|[OpenID4VCI]|
 |`claims`|A JSON object containing a list of name/value pairs, where the name is a certain namespace as defined in ISO/IEC 18013-5:2021 (or any profile of it) and the value is a JSON object. It `MUST` defined as in [Credentials Supported Claims Object](#vci-credentials-supported-claims-object).|[OpenID4VCI]|
 

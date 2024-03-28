@@ -95,7 +95,6 @@ In addition to the values that are defined in the Token Endpoint, the proof `MUS
 
 |Parameter|Description|Reference|
 |:----|:----|:----|
-|`format`|It `MUST` be set to `mso_mdoc`|[OPENID4VCI]|
 |`credential`|Contains the issued QEAA. It `MUST` be base64url-encoded JSON string in [ISO/IEC 18013-5:2021] format. It `MUST` contain CBOR encoded mDL as described in [MDOC-CBOR Format](#mdoc-cbor-format) section.|[OPENID4VCI], Appendix E|
 |`c_nonce`|JSON string containing a nonce value to be used to create a proof of possession of the key material when requesting a further credential or for the renewal of a credential.|[OPENID4VCI]|
 |`c_nonce_expires_in`|JSON integer corresponding to the `c_nonce` lifetime in seconds.|[OPENID4VCI]|

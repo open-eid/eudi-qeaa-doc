@@ -22,6 +22,7 @@ all member states, while meeting the necessary security, privacy, and user exper
 |1.0.2|20.12.2023|Requirements section updates. Potential logo and disclaimer.|
 |1.0.3|01.02.2024|Renamed doctype parameter to credential_configuration_id and removed claims parameter from PAR Authorization Details Object. Removed claims parameter from credential request. Updated the Presentation Flow to use sending Authorization Request Object by reference and sending Authorization Response using response mode `direct_post`. Added Credential Nonce endpoint specification and `credential_nonce_endpoint` metadata parameter. Renamed credential issuer metadata parameter `credentials_supported` to `credential_configurations_supported`.|
 |1.0.4|28.03.2024|Changed the credential issuer metadata `proof_types` structure from an array to a `proof_types_supported` map that contains a `proof_signing_alg_values_supported` parameter. Changed `cryptographic_binding_methods_supported` value from `mso` to `cose_key`. Removed `format` parameter from [Credential Response](#vci-credential-response).|
+|1.0.5|11.04.2024|Fixed credential presentation flow [Authorization Request Object](#vp-authorization-request-object) by adding `response_mode`, `response_uri` and removing `response_uri` claims.|
 # Keywords
 
 This document uses the capitalized
@@ -687,7 +688,7 @@ order:
 |`DeviceAuthentication`|It `MUST` be set to `DeviceAuthentication`.|`tstr`|
 |`SessionTranscript`||`array`|
 |`DocType`|It `MUST` be set to `org.iso.18013.5.1.mDL`|`tstr`|
-|`DeviceNameSpacesBytes`|It `MUST` be set to empty `map` encoded in CBOR Tag 24 ([cbor-tags]).|`encoded-cbor`|
+|`DeviceNameSpacesBytes`|It `MUST` be set to empty `map` encoded in CBOR Tag 24 ([cbor-tags]) because no device (holder) signed claims are returned.|`encoded-cbor`|
 
 <a id="mdl-session-transcript-structure"></a>
 **SessionTranscript**
@@ -1433,9 +1434,10 @@ sequenceDiagram
 
 |Claim|Description|Reference|
 |:----|:----|:----|
-|`response_type`|It `MUST` be set to `vp_token`. Indicates that a successful response `MUST` include the `vp_token` parameter. The default Response Mode for this Response Type is `fragment`, i.e., the Authorization Response parameters are encoded in the fragment added to the `redirect_uri` when redirecting back to the Verifier.|[OpenID4VP], [RFC 6749]|
+|`response_type`|It `MUST` be set to `vp_token`. Indicates that a successful response `MUST` include the `vp_token` parameter.|[OpenID4VP], [RFC 6749]|
+|`response_mode`|It `MUST` be set to `direct_post`.|[OpenID4VP]|
+|`response_uri`|It `MUST` be set to [Authorization Response Object Endpoint][#vp-post-response-object-endpoint] uri.|[OpenID4VP]|
 |`client_id`|It `MUST` be set to DNS name and match a dNSName Subject Alternative Name (SAN) [RFC5280] entry in the leaf certificate passed with the request header `x5c` claim. It is also used to bind the Verifiable Presentation to the intended audience.|[OpenID4VP]|
-|`redirect_uri`|It `MUST` be set to callback URI the Authorization Response should be redirected.|[OpenID4VP]|
 |`client_id_scheme`|It `MUST` be set to `x509_san_dns`.|[OpenID4VP]|
 |`client_metadata`|A JSON object containing the Verifier metadata values. It `MUST` be UTF-8 encoded.|[OpenID4VP]|
 |`presentation_definition`|A JSON object containing a [Presentation Definition](#vp-presentation-definition-object) for requested credential.|[OpenID4VP], [DIF.PresentationExchange]|

@@ -226,9 +226,10 @@ sequenceDiagram
 
 |Claim|Description|Reference|
 |:----|:----|:----|
-|`response_type`|It `MUST` be set to `vp_token`. Indicates that a successful response `MUST` include the `vp_token` parameter. The default Response Mode for this Response Type is `fragment`, i.e., the Authorization Response parameters are encoded in the fragment added to the `redirect_uri` when redirecting back to the Verifier.|[OpenID4VP], [RFC 6749]|
+|`response_type`|It `MUST` be set to `vp_token`. Indicates that a successful response `MUST` include the `vp_token` parameter.|[OpenID4VP], [RFC 6749]|
+|`response_mode`|It `MUST` be set to `direct_post`.|[OpenID4VP]|
+|`response_uri`|It `MUST` be set to [Authorization Response Object Endpoint][#vp-post-response-object-endpoint] uri.|[OpenID4VP]|
 |`client_id`|It `MUST` be set to DNS name and match a dNSName Subject Alternative Name (SAN) [RFC5280] entry in the leaf certificate passed with the request header `x5c` claim. It is also used to bind the Verifiable Presentation to the intended audience.|[OpenID4VP]|
-|`redirect_uri`|It `MUST` be set to callback URI the Authorization Response should be redirected.|[OpenID4VP]|
 |`client_id_scheme`|It `MUST` be set to `x509_san_dns`.|[OpenID4VP]|
 |`client_metadata`|A JSON object containing the Verifier metadata values. It `MUST` be UTF-8 encoded.|[OpenID4VP]|
 |`presentation_definition`|A JSON object containing a [Presentation Definition](#vp-presentation-definition-object) for requested credential.|[OpenID4VP], [DIF.PresentationExchange]|

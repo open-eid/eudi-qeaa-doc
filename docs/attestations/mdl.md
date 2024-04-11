@@ -577,7 +577,7 @@ order:
 |`DeviceAuthentication`|It `MUST` be set to `DeviceAuthentication`.|`tstr`|
 |`SessionTranscript`||`array`|
 |`DocType`|It `MUST` be set to `org.iso.18013.5.1.mDL`|`tstr`|
-|`DeviceNameSpacesBytes`|It `MUST` be set to empty `map` encoded in CBOR Tag 24 ([cbor-tags]).|`encoded-cbor`|
+|`DeviceNameSpacesBytes`|It `MUST` be set to empty `map` encoded in CBOR Tag 24 ([cbor-tags]) because no device (holder) signed claims are returned.|`encoded-cbor`|
 
 <a id="mdl-session-transcript-structure"></a>
 **SessionTranscript**

@@ -2246,10 +2246,18 @@ with [ISO/IEC 18013-5:2021]
 |:----|:----|:----|
 |`name`|String value of a display name for the claim.|[OpenID4VCI]|
 |`locale`|String value that identifies language of this object represented as language tag values defined in BCP47 [RFC 5646]. There MUST be only one object for each language identifier.|[OpenID4VCI], [RFC 5646]|
-|`logo`|A JSON object with information about the logo of the Credential.|[OpenID4VCI]|
+|`logo`|A JSON object with information about the logo of the Credential. It `MUST` defined as in [Logo Object](#vci-credentials-logo-object).|[OpenID4VCI]|
 |`description`|String value of a description of the Credential.|[OpenID4VCI]|
 |`background_color`|String value of a background color of the Credential represented as numerical color values defined in CSS Color Module Level 37.|[OpenID4VCI], [CSS-Color]|
 |`text_color`|String value of a text color of the Credential represented as numerical color values defined in CSS Color Module Level 37|[OpenID4VCI], [CSS-Color]|
+
+<a id="vci-credentials-logo-object"></a>
+**Logo Object**
+
+|Claim|Description|Reference|
+|:----|:----|:----|
+|`url`|String value that contains a URI where the Wallet can obtain the logo of the Credential Issuer.|[OpenID4VCI]|
+|`alt_text`|String value of the alternative text for the logo image.|[OpenID4VCI]|
 
 <a id="vci-credentials-supported-claims-object"></a>
 **Credentials Supported Claims Object**

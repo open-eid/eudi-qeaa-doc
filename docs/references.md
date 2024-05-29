@@ -66,7 +66,7 @@
 
 [RFC 2119]: https://datatracker.ietf.org/doc/html/rfc2119 "Key words for use in RFCs to Indicate Requirement Levels"
 
-[attestation-based-client-auth]: https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-00.html "OAuth 2.0 Attestation-Based Client Authentication"
+[attestation-based-client-auth]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth "OAuth 2.0 Attestation-Based Client Authentication"
 
 [cbor-tags]: https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml "Concise Binary Object Representation (CBOR) Tags"
 

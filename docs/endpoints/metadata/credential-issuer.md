@@ -9,14 +9,27 @@
 Credential Issuer Metadata Parameters are discussed in [OPENID4VCI] Sections 10.2 and E.2.2 for credentials complying
 with [ISO/IEC 18013-5:2021]
 
+<a id="vci-credential-issuer-metadata"></a>
+
 |Claim|Description|Reference|
 |:----|:----|:----|
-|`credential_issuer`|The Credential Issuer Identifier.|[OpenID4VCI]|
 |`authorization_servers`|Identifiers of the OAuth 2.0 Authorization Servers the Credential Issuer relies on for authorization. If this element is omitted, the entity providing the Credential Issuer is also acting as the AS, i.e., the Credential Issuer’s identifier is used as the OAuth 2.0 Issuer value to obtain the Authorization Server metadata|[OpenID4VCI], [RFC 8414]|
+|`credential_issuer`|The Credential Issuer Identifier.|[OpenID4VCI]|
 |`credential_endpoint`|URL of the Credential Endpoint. This URL `MUST` use the https scheme and `MAY` contain port, path, and query parameter components.|[OpenID4VCI]|
 |`credential_nonce_endpoint`|URL of the Credential Nonce Endpoint. This URL `MUST` use the https scheme and `MAY` contain port, path, and query parameter components.|[OpenID4VCI]|
+|`batch_credential_issuance`|Object containing information about the Credential Issuer's supports for batch issuance of Credentials on the Credential Endpoint. The presence of this parameter means that the issuer supports the proofs parameter in the Credential Request so can issue more than one Verifiable Credential for the same Credential Dataset in a single request/response. It must contain `batch_size` claim. Integer value specifying the maximum array size for the proofs parameter in a Credential Request.|[OpenID4VCI]|
+|`credential_response_encryption`|Object containing information about whether the Credential Issuer supports encryption of the Credential Credential Response on top of TLS. It `MUST` defined as in [Credential Response Encryption Object](#vci-credential-response-encryption) table.|[OpenID4VCI]|
 |`display`|An array of objects, where each object contains display properties of a Credential Issuer for a certain language. It `MUST` defined as in [Display Object](#vci-display-object).|[OpenID4VCI]|
-|`credential_configurations_supported`|A JSON array containing a list of JSON objects, each of them representing metadata about a separate credential type that the Credential Issuer can issue. The JSON objects in the array `MUST` conform to the structure defined in OpenID4VCI, Section 10.2.3.1. and as defined in [Credentials Supported Object](#vci-credentials-supported-object)|[OpenID4VCI]|
+|`credential_configurations_supported`|A JSON array containing a list of JSON objects, each of them representing metadata about a separate credential type that the Credential Issuer can issue. The JSON objects in the array `MUST` conform to the structure defined in OpenID4VCI, Section 10.2.3.1. and as defined in [Credentials Supported Object](#vci-credentials-supported-object) table.|[OpenID4VCI]|
+
+<a id="vci-credential-response-encryption"></a>
+**Credential Response Encryption Object**
+
+|Claim|Description|Reference|
+|:----|:----|:----|
+|`encryption_required`|Boolean value specifying whether the Credential Issuer requires the additional encryption on top of TLS for the Credential Response. If the value is true, the Credential Issuer requires encryption for every Credential Response and therefore the Wallet MUST provide encryption keys in the Credential Request. If the value is false, the Wallet MAY chose whether it provides encryption keys or not.|[OpenID4VCI]|
+|`alg_values_supported`|Array containing a list of the JWE encryption algorithms (alg values) supported by the Credential Endpoint to encode the Credential Response in a JWT.|[OpenID4VCI], [RFC 7516], [RFC 7518], [RFC 7519]|
+|`enc_values_supported`|Array containing a list of the JWE encryption algorithms (enc values) supported by the Credential Endpoint to encode the Credential Response in a JWT.|[OpenID4VCI], [RFC 7516], [RFC 7518], [RFC 7519]|
 
 <a id="vci-display-object"></a>
 **Display Object**
@@ -72,64 +85,138 @@ credential type and minimal set of mandatory claims as defined in [ISO/IEC 18013
 ```json
 {
    "credential_issuer": "https://credential-issuer.example.com",
-   "authorization_servers": [
-      "https://as.example.com"
-   ],
    "credential_endpoint": "https://credential-issuer.example.com/credential",
-   "display": [
-      {
-         "name": "Transpordiamet",
-         "locale": "et-EE"
-      },
-      {
-         "name": "Transport Administration",
-         "locale": "en-US"
-      }
-   ],
-   "credentials_supported": {
+   "credential_nonce_endpoint": "https://credential-issuer.example.com/nonce",
+   "batch_credential_issuance": {
+      "batch_size": 50
+   },
+   "credential_configurations_supported": {
       "org.iso.18013.5.1.mDL": {
          "format": "mso_mdoc",
          "doctype": "org.iso.18013.5.1.mDL",
          "cryptographic_binding_methods_supported": [
-            "mso"
+            "cose_key"
          ],
-         "proof_types_supported": [
-            "jwt"
+         "credential_signing_alg_values_supported": [
+            "ES256"
          ],
+         "proof_types_supported": {
+            "jwt": {
+               "proof_signing_alg_values_supported": [
+                  "RS256",
+                  "RS384",
+                  "RS512",
+                  "ES256",
+                  "ES384",
+                  "ES512",
+                  "PS256",
+                  "PS384",
+                  "PS512"
+               ]
+            }
+         },
          "display": [
             {
-               "name": "Mobiilne juhiluba",
-               "locale": "et-EE",
-               "logo": {
-                  "url": "https://examplestate.com/public/mdl.png",
-                  "alt_text": "mobiilse juhiloa kandiline kujund"
-               },
-               "background_color": "#12107c",
-               "text_color": "#FFFFFF"
-            },
-            {
                "name": "Mobile Driving License",
-               "locale": "en-US",
+               "locale": "en",
                "logo": {
-                  "url": "https://examplestate.com/public/mdl.png",
-                  "alt_text": "a square figure of a mobile driving licence"
+                  "uri": "https://eudi-issuer.example.com/credential_logo_en.png",
+                  "alt_text": null
                },
-               "background_color": "#12107c",
-               "text_color": "#FFFFFF"
+               "description": "Description",
+               "background_color": "#5F5",
+               "text_color": "#282"
             }
          ],
          "claims": {
             "org.iso.18013.5.1": {
+               "un_distinguishing_sign": {
+                  "mandatory": true,
+                  "display": [
+                     {
+                        "name": "UN distinguishing sign",
+                        "locale": "en"
+                     }
+                  ]
+               },
+               "driving_privileges": {
+                  "mandatory": true,
+                  "display": [
+                     {
+                        "name": "Driving privileges",
+                        "locale": "en"
+                     }
+                  ]
+               },
+               "document_number": {
+                  "mandatory": true,
+                  "display": [
+                     {
+                        "name": "Document number",
+                        "locale": "en"
+                     }
+                  ]
+               },
+               "issue_date": {
+                  "mandatory": true,
+                  "display": [
+                     {
+                        "name": "Issue date",
+                        "locale": "en"
+                     }
+                  ]
+               },
+               "issuing_country": {
+                  "mandatory": true,
+                  "display": [
+                     {
+                        "name": "Issuing country",
+                        "locale": "en"
+                     }
+                  ]
+               },
+               "issuing_authority": {
+                  "mandatory": true,
+                  "display": [
+                     {
+                        "name": "Issuing authority",
+                        "locale": "en"
+                     }
+                  ]
+               },
+               "birth_date": {
+                  "mandatory": true,
+                  "display": [
+                     {
+                        "name": "Birthdate",
+                        "locale": "en"
+                     }
+                  ]
+               },
+               "expiry_date": {
+                  "mandatory": true,
+                  "display": [
+                     {
+                        "name": "Expiry date",
+                        "locale": "en"
+                     }
+                  ]
+               },
                "given_name": {
                   "mandatory": true,
                   "display": [
                      {
-                        "name": "Eesnimi",
-                        "locale": "et-EE"
-                     },
-                     {
                         "name": "Given Name",
-                        "locale": "en-US"
+                        "locale": "en"
+                     }
+                  ]
+               },
+               "portrait": {
+                  "mandatory": true,
+                  "display": [
+                     {
+                        "name": "Portrait",
+                        "locale": "en"
                      }
                   ]
                },
@@ -137,42 +224,42 @@ credential type and minimal set of mandatory claims as defined in [ISO/IEC 18013
                   "mandatory": true,
                   "display": [
                      {
-                        "name": "Perekonnanimi",
-                        "locale": "et-EE"
-                     },
-                     {
-                        "name": "Surname",
-                        "locale": "en-US"
+                        "name": "Family Name",
+                        "locale": "en"
                      }
                   ]
-               },
-               "birth_date": {
-                  "mandatory": true
-               },
-               "issue_date": {
-                  "mandatory": true
-               },
-               "expiry_date": {
-                  "mandatory": true
-               },
-               "issuing_country": {
-                  "mandatory": true
-               },
-               "issuing_authority": {
-                  "mandatory": true
-               },
-               "document_number": {
-                  "mandatory": true
-               },
-               "portrait": {
-                  "mandatory": true
-               },
-               "driving_privileges": {
-                  "mandatory": true
                }
             }
          }
       }
-   }
+   },
+   "credential_response_encryption": {
+      "required": false,
+      "alg_values_supported": [
+         "RSA-OAEP",
+         "RSA-OAEP-256",
+         "ECDH-ES",
+         "ECDH-ES+A128KW",
+         "ECDH-ES+A192KW",
+         "ECDH-ES+A256KW"
+      ],
+      "enc_values_supported": [
+         "A128GCM",
+         "A192GCM",
+         "A256GCM",
+         "A128CBC-HS256",
+         "A192CBC-HS384",
+         "A256CBC-HS512"
+      ]
+   },
+   "display": [
+      {
+         "name": "EUDI Credential issuer",
+         "locale": "en"
+      }
+   ],
+   "authorization_servers": [
+      "https://as.example.com"
+   ]
 }
 ```

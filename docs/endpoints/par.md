@@ -10,6 +10,7 @@
 7. The Authorization Server `MUST` be able to uniquely identify the Credential Issuer based on the `locations` claim
    value in `authorization_details` object as suggested by [OpenID4VCI].
 
+<a id="vci-par-request"></a>
 ### PAR Request
 
 <a id="vci-par-request-parameters"></a>

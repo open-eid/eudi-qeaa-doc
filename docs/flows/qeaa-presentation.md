@@ -19,6 +19,7 @@ different Credential formats.
 1. Native iOS/Android mDL consumer application requesting mDL presentation in same-device flow.
 
 <a id="vp-wallet-metadata"></a>
+
 ### Wallet Metadata
 
 1. Wallet Provider `SHALL` provide domain-bound iOS Universal Link/Android App link for Wallet Invocation in
@@ -28,6 +29,7 @@ different Credential formats.
 
 ```json
 {
+  "issuer": "https://self-issued.me/v2",
   "authorization_endpoint": "https://<wallet-provider-domain>/authorize",
   "client_id_schemes_supported": [
     "x509_san_dns"
@@ -40,27 +42,38 @@ different Credential formats.
     "vp_token"
   ],
   "response_modes_supported": [
-    "direct_post"
+    "direct_post.jwt"
   ],
   "request_uri_parameter_supported": true,
   "request_parameter_supported": false,
   "vp_formats_supported": {
     "mso_mdoc": {
       "alg_values_supported": [
-        "ES256"
+        "ES256",
+        "ES384",
+        "ES512",
+        "EdDSA"
       ]
     }
-  }
+  },
+  "authorization_encryption_alg_values_supported": [
+    "ECDH-ES"
+  ],
+  "authorization_encryption_enc_values_supported": [
+    "A256GCM"
+  ]
 }
 ```
 
 <a id="vp-presentation-flow"></a>
+
 ### Presentation Flow
 
-The Presentation Flow uses the Response Mode `direct_post` that allows the Wallet to send the Authorization Response to
-an endpoint controlled by the Verifier via an HTTPS POST request. The [OpenID4VP] Section 11.5 leaves the exact
-implementation up to the Verifier. This document implements modified version of the flow specified in [OpenID4VP]
-Section 11.5 that adds Verifier Request Object Endpoint that initiates the transaction instead.
+The Presentation Flow `SHALL` use the `direct_post.jwt` Response Mode, that allows the Wallet to send the Authorization
+Response to an endpoint controlled by the Verifier via an HTTPS POST request.
+The [OpenID4VP] Section 11.5 leaves the exact implementation up to the Verifier. This document implements modified
+version of the flow specified in [OpenID4VP] Section 11.5 that adds Verifier Request Object Endpoint that initiates the
+transaction instead.
 
 ```mermaid
 sequenceDiagram
@@ -182,7 +195,7 @@ sequenceDiagram
 
 - The Wallet `MUST` bind Verifiable Presentation to the authorization request `client_id` and `nonce` values by
   appending [DeviceSigned](#mdl-device-signed-structure) structure
-  with [OpenID4VPHandover](#mdl-openid4vp-handover-structure) to mDL returned
+  with [OID4VPHandover](#mdl-openid4vp-handover-structure) to mDL returned
   in [QEAA Issuance flow](#vci-issuance-flow) and set the resulting CBOR encoded mDL directly as `vp_token` value.
 - It `MUST` create [Presentation Submission](#vp-presentation-submission-object) object in response
   to [Presentation Definition](#vp-presentation-submission-object).
@@ -395,17 +408,27 @@ A non-normative example of the Presentation Definition Object:
 **POST Authorization Response Object Endpoint**
 
 1. The Authorization Response Object Endpoint is a **public** HTTP API at the Verifier Backend and `MUST` accept
-   HTTP `POST` request with parameters in the HTTP request message body using the `application/x-www-form-urlencoded`
-   format.
-2. It `MUST` use the `https` scheme.
-3. It `MUST` accept [Authorization Response Object](#vp-authorization-response-object) parameters as request parameters.
-4. It `MUST` link [Authorization Response Object](#vp-authorization-response-object) to `transaction_id` using `state`
+   HTTP `POST` request with `response` parameter in the HTTP request message body using
+   the `application/x-www-form-urlencoded`
+   format. See [OpenID4VP] 6.3.1. Response Mode direct_post.jwt
+2. The`response` parameter `MUST` contain [Authorization Response Object](#vp-authorization-response-object) as
+   encrypted JWT. See [OpenID4VP] 6.3. Signed and Encrypted Responses.
+3. It `MUST` use the `https` scheme.
+4. It `MUST` accept [Authorization Response Object](#vp-authorization-response-object) parameters as request parameters.
+5. It `MUST` link [Authorization Response Object](#vp-authorization-response-object) to `transaction_id` using `state`
    claim from [Authorization Request Object](#vp-authorization-request-object)
 
 <a id="vp-authorization-response-object"></a>
-**Authorization Response Object**
+**Authorization Response Object JWE**
 
-|Parameter|Description|Reference|
+**Header**
+|Claim|Description|Reference|
+|:----|:----|:----|
+
+
+**Payload**
+
+|Claim|Description|Reference|
 |:----|:----|:----|
 |`vp_token`|JSON String that `SHALL` contain a single CBOR encoded mDL.|[OpenID4VP]|
 |`presentation_submission`|JSON object that `SHALL` contain mappings between the requested Verifiable Credentials and where to find them within the returned VP Token.|[OpenID4VP], [DIF.PresentationExchange]|
@@ -476,6 +499,7 @@ A non-normative example of the Presentation Submission Object:
 |`request_uri`|It `MUST` be set to the same value as obtained from [POST Request Object Endpoint](#vp-post-request-object-endpoint) response.|[RFC 9126]|
 
 <a id="vp-request-validation-steps"></a>
+
 #### Validation Steps
 
 - The Wallet `MUST` validate the [Authorization Request Object](#vp-authorization-request-object).
@@ -500,6 +524,7 @@ A non-normative example of the Presentation Submission Object:
   acquired from [Credentials Supported Display Object](#vci-credentials-supported-display-object) in consent view.
 
 <a id="vp-response-validation-steps"></a>
+
 #### Validation Steps
 
 - Verifier `MUST` process the `presentation_submission` parameter to get instructions how to process the `vp_token`
@@ -508,5 +533,5 @@ A non-normative example of the Presentation Submission Object:
 - Verifier `MUST` validate the signature `mDL` as described in [ISO/IEC 18013-1:2018] Section 9.3.
 - Verifier `MUST` validate that `client_id` and `nonce` values are bound to the returned credential by
   reconstructing the [DeviceAuthentication](#mdl-device-authentication-structure) structure
-  with [OpenID4VPHandover](#mdl-openid4vp-handover-structure) and validating the signature
+  with [OID4VPHandover](#mdl-openid4vp-handover-structure) and validating the signature
   provided in [DeviceSignature](#mdl-device-signature-structure) structure.

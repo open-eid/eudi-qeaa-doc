@@ -83,3 +83,5 @@
 [draft-oid4vc-haip-sd-jwt-vc]: https://openid.net/specs/openid4vc-high-assurance-interoperability-profile-sd-jwt-vc-1_0-00.html "OpenID4VC High Assurance Interoperability Profile with SD-JWT VC"
 
 [I-D.ietf-oauth-security-topics]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics-24 "OAuth 2.0 Security Best Current Practice"
+
+[JARM]: https://openid.net/specs/oauth-v2-jarm-final.html "JWT Secured Authorization Response Mode for OAuth 2.0 (JARM)"

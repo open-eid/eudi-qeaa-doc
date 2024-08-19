@@ -531,21 +531,16 @@ A non-normative example of the mDL document in CBOR diagnostic notation:
 
 #### mDL Presentation
 
-When mDL is presented during [OpenID4VP] presentation flow, the Wallet `MUST` bind authorization request `client_id`
-and `nonce` values to the presented mDL. This is accomplished by adding `deviceSigned` element to mDL document
-that `SHALL` contain the required `client_id` and `nonce` as device signed elements. The [ISO/IEC 18013-5:2021]
-specification has not considered the requirements of [OpenID4VP] and
-therefore current specification extends [SessionTranscript](#mdl-session-transcript-structure) structure with
-new `Handover` type [OpenID4VPHandover](#mdl-openid4vp-handover-structure) to support `client_id` and `nonce` as
-required by [OpenID4VP].
+When mDL is presented during [OpenID4VP] presentation flow, the Wallet Instance `MUST`
+bind [authorization request object](#vp-authorization-request-object) `client_id`, `nonce` and `response_uri` values to
+the presented mDL. This is done by adding [DeviceSigned](#mdl-device-signed-structure) element to mDL document.
 
 <a id="mdl-device-signed-structure"></a>
 **DeviceSigned**
 
 It contains data elements that are signed by the holder with the key defined
 in [Mobile Security Object](#mdl-mobile-security-object). This provides integrity and authenticity for these data
-elements
-through `mdoc authentication` discussed in [ISO/IEC 18013-5:2021], 9.1.3.
+elements through `mdoc authentication` discussed in [ISO/IEC 18013-5:2021], 9.1.3.
 
 |Element|Description|Encoding|
 |:----|:----|:----|
@@ -557,7 +552,7 @@ through `mdoc authentication` discussed in [ISO/IEC 18013-5:2021], 9.1.3.
 
 |Element|Description|Encoding|
 |:----|:----|:----|
-|`deviceSignature`|Contains [DeviceSignature](#mdl-device-signature-structure) structure to authenticate the mdoc with mdoc ECDSA/EdDSA authentication.|`array`|
+|`deviceSignature`|Contains [DeviceSignature](#mdl-device-signature-structure) structure to authenticate the mdoc with `mdoc ECDSA/EdDSA authentication`|`array`|
 
 <a id="mdl-device-signature-structure"></a>
 **DeviceSignature**
@@ -575,7 +570,7 @@ order:
 |Element|Description|Encoding|
 |:----|:----|:----|
 |`DeviceAuthentication`|It `MUST` be set to `DeviceAuthentication`.|`tstr`|
-|`SessionTranscript`||`array`|
+|`SessionTranscript`|Contains [SessionTranscript](#mdl-session-transcript-structure) structure.|`array`|
 |`DocType`|It `MUST` be set to `org.iso.18013.5.1.mDL`|`tstr`|
 |`DeviceNameSpacesBytes`|It `MUST` be set to empty `map` encoded in CBOR Tag 24 ([cbor-tags]) because no device (holder) signed claims are returned.|`encoded-cbor`|
 
@@ -589,19 +584,24 @@ elements:
 |:----|:----|:----|
 |`DeviceEngagementBytes`|It `MUST` be set to `null`.|`array`|
 |`EReaderKeyBytes`|It `MUST` be set to `null`.|`null`|
-|`Handover`|It `MUST` be set to [OpenID4VPHandover](#mdl-openid4vp-handover-structure) structure.|`array`|
+|`Handover`|It `MUST` be set to [OID4VPHandover](#mdl-openid4vp-handover-structure) structure.|`array`|
 
 <a id="mdl-openid4vp-handover-structure"></a>
-**OpenID4VPHandover**
+**OID4VPHandover**
 
-The proposed `OpenID4VPHandover` type requires, that `DeviceEngagementBytes` and `EReaderKeyBytes` are set to `null`
+The `OID4VPHandover` type requires, that `DeviceEngagementBytes` and `EReaderKeyBytes` are set to `null`
 in `SessionTranscript`.
 
 |Element|Description|Encoding|
 |:----|:----|:----|
-|`name`|It `MUST` be set to `openID4VPHandover`.|`tstr`|
-|`aud`|The intended audience. It `MUST` be set to `client_id` value from Verifier authorization request.|`tstr`|
-|`nonce`|It `MUST` be set to `nonce` value from Verifier authorization request.|`tstr`|
+|`clientIdHash`|SHA-256 hash of CBOR array [`client_id`, `mdoc_generated_nonce`].|`bstr`|
+|`responseUriHash`|SHA-256 hash of CBOR array [`response_uri`, `mdoc_generated_nonce`].|`bstr`|
+|`nonce`|It `MUST` be set to `nonce` value from the [authorization request object](#vp-authorization-request-object).|`tstr`|
+
+<a id="mdl-openid4vp-mdoc-generated-nonce"></a>
+**mDOC generated nonce**
+
+Wallet instance `SHALL` generate `mdoc_generated_nonce` value with sufficient entropy.
 
 A non-normative example of the `deviceSigned` with detached payload in CBOR diagnostic notation:
 
@@ -628,7 +628,7 @@ A non-normative example of the `deviceSigned` with attached payload in CBOR diag
          "deviceSignature": [
              h'a10126',
              {33_0: []},
-             h'd8185865847444657669636541757468656e7469636174696f6e83f6f683716f70656e494434565048616e646f7665727276657269666965722d636c69656e742d69646b6e6f6e63652d76616c7565756f72672e69736f2e31383031332e352e312e6d444cd81841a0',
+             h'847444657669636541757468656e7469636174696f6e83f6f68358202011582dff6c159f3e1d9287522e39f7c26336177edffa7cd0df94727e68b11f58203b2a57db24bb04c0c7b68e5c08d19176a2147e426c494217f4234971d37e5603782b64694b7665586a6374345857554f763073484a716e72746b6e34625651706c4a704b6c3377487030517551756f72672e69736f2e31383031332e352e312e6d444cd81841a0',
              h'a40589563d7ed6836eb4a066be0fa0b7fcbe60c41ecc44cc04e3cb2b651db6681e6ae89224fa615c825b81b021cc03009af4465aae8e82353fafd154bb70432f',
          ],
      },
@@ -639,18 +639,18 @@ A non-normative example of the `payload` in CBOR diagnostic notation:
 
 ```
 24_0(<<[
-    "DeviceAuthentication",
+  "DeviceAuthentication",
+  [
+    null,
+    null,
     [
-        null,
-        null,
-        [
-            "openID4VPHandover",
-            "verifier-client-id",
-            "nonce-value",
-        ],
-    ],
-    "org.iso.18013.5.1.mDL",
-    24_0(<<{}>>),
+      h'2011582dff6c159f3e1d9287522e39f7c26336177edffa7cd0df94727e68b11f',
+      h'3b2a57db24bb04c0c7b68e5c08d19176a2147e426c494217f4234971d37e5603',
+      "diKveXjct4XWUOv0sHJqnrtkn4bVQplJpKl3wHp0QuQ"
+    ]
+  ],
+  "org.iso.18013.5.1.mDL",
+  24(<<{}>>)
 ]>>)
 ```
 

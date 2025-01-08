@@ -6,7 +6,7 @@
 
 [OpenID.Core]: https://openid.net/specs/openid-connect-core-1_0.html "OpenID Connect Core 1.0"
 
-[OpenID4VCI]: https://openid.github.io/OpenID4VCI/openid-4-verifiable-credential-issuance-wg-draft.html "OpenID for Verifiable Credential Issuance - draft 13"
+[OpenID4VCI]: https://openid.github.io/OpenID4VCI/openid-4-verifiable-credential-issuance-wg-draft.html "OpenID for Verifiable Credential Issuance - draft 14"
 
 [OpenID4VP]: https://openid.github.io/OpenID4VP/openid-4-verifiable-presentations-wg-draft.html "OpenID for Verifiable Presentations - draft 20"
 
@@ -80,6 +80,6 @@
 
 [openid-4-vc-security-and-trust]: https://openid.bitbucket.io/connect/openid-4-vc-security-and-trust-1_0.html "Security and Trust in OpenID for Verifiable Credentials"
 
-[draft-oid4vc-haip-sd-jwt-vc]: https://vcstuff.github.io/oid4vc-haip-sd-jwt-vc/draft-oid4vc-haip-sd-jwt-vc.html "OpenID4VC High Assurance Interoperability Profile with SD-JWT VC"
+[draft-oid4vc-haip-sd-jwt-vc]: https://openid.net/specs/openid4vc-high-assurance-interoperability-profile-sd-jwt-vc-1_0-00.html "OpenID4VC High Assurance Interoperability Profile with SD-JWT VC"
 
 [I-D.ietf-oauth-security-topics]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics-24 "OAuth 2.0 Security Best Current Practice"
